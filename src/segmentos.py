@@ -12,33 +12,36 @@ PLAN_KEYS = ["objetivo", "oferta", "mantenimiento", "fidelizacion", "comunicacio
 
 SEGMENTOS = {
     0: {
-        "slug": "fieles-taller",
-        "nombre": "Fieles de taller",
-        "frase": "Clientes de hace tiempo ({antiguedad_meses} de media) que pasan por el taller más que nadie: "
-                 "{visitas_taller} visitas por coche. Casi no tienen coches electrificados.",
-        "accion": "Fidelizar",
-        "etiquetas": ["{visitas_taller} visitas al taller por coche", "{antiguedad_meses} con nosotros",
+        "slug": "coche-garantia",
+        "nombre": "Coche en garantía",
+        "frase": "Llevan tiempo con nosotros ({antiguedad_meses}) y son los que más han usado la garantía: "
+                 "{visitas_taller} visitas por coche. Su coche ({edad_coche}) está llegando al final de la garantía, "
+                 "y casi no tienen coches electrificados.",
+        "accion": "Retener",
+        "etiquetas": ["{visitas_taller} visitas en garantía por coche", "{antiguedad_meses} con nosotros",
                       "solo {pct_electrificado} electrificados"],
         "plan": {
-            "objetivo": "Mantener y premiar su relación con el servicio oficial, que es lo que los define.",
-            "oferta": "Renovación con prioridad y valoración de su coche actual cuando se acerque el cambio; "
-                      "primera prueba de un híbrido, porque casi no tienen.",
-            "mantenimiento": "Contrato de mantenimiento con precio cerrado: ya vienen mucho al taller y así les "
-                             "damos tranquilidad y nos aseguramos de que sigan viniendo.",
-            "fidelizacion": "Ventajas por antigüedad: revisiones prioritarias, coche de sustitución, regalos de "
-                            "aniversario como clientes.",
-            "comunicacion": "Email y teléfono con un tono de agradecimiento por su confianza; recordatorios de "
-                            "servicio personalizados.",
-            "medir": "Contratos de mantenimiento firmados y cuántos siguen viniendo al taller oficial.",
+            "objetivo": "Que sigan viniendo al taller oficial cuando se les acabe la garantía, y que su próximo "
+                        "coche sea un Mercedes.",
+            "oferta": "Renovación anticipada con buena valoración de su coche: salir de la garantía es un buen "
+                      "momento para cambiar. Proponer un híbrido, porque casi no tienen.",
+            "mantenimiento": "Antes de que venza la garantía, extensión de garantía o contrato de mantenimiento con "
+                             "precio cerrado. Ya conocen el taller oficial: que no se vayan a uno independiente.",
+            "fidelizacion": "Ventajas por antigüedad: revisión prioritaria, coche de sustitución y descuento en la "
+                            "extensión según los años con la marca.",
+            "comunicacion": "Aviso personal unos meses antes de que venza la garantía (estimada a partir de la "
+                            "matriculación), por email y teléfono; tono de agradecimiento por su confianza.",
+            "medir": "Cuántos contratan la extensión o el mantenimiento, y cuántos siguen viniendo al taller "
+                     "oficial un año después.",
         },
     },
     1: {
         "slug": "recien-llegados",
         "nombre": "Recién llegados",
         "frase": "Llevan poco con nosotros ({antiguedad_meses}) y tienen un coche casi nuevo ({edad_coche}). "
-                 "Todavía apenas han pisado el taller.",
+                 "Todavía han usado poco la garantía.",
         "accion": "Vincular",
-        "etiquetas": ["{antiguedad_meses} como clientes", "coche de {edad_coche}", "{visitas_taller} visitas al taller por coche"],
+        "etiquetas": ["{antiguedad_meses} como clientes", "coche de {edad_coche}", "{visitas_taller} visitas en garantía por coche"],
         "plan": {
             "objetivo": "Convertir la primera compra en una relación: que vuelvan al taller oficial y que su "
                         "próximo coche también sea un Mercedes.",
@@ -55,15 +58,18 @@ SEGMENTOS = {
         "slug": "coche-veterano",
         "nombre": "Coche veterano",
         "frase": "Tienen el coche más antiguo de la cartera ({edad_coche}), sobre todo de combustión y comprado "
-                 "sin leasing. Ojo: en muchos la antigüedad como cliente es un valor por defecto, así que "
-                 "pueden llevar con nosotros más tiempo del que dice el dato.",
+                 "sin leasing. Casi no tienen relación registrada con el taller oficial: más de la mitad no tiene ninguna "
+                 "visita en garantía (puede que compraran el coche de segunda mano o que lo lleven a otro taller). "
+                 "Ojo: en muchos la antigüedad como cliente es un valor por defecto, así que pueden llevar con "
+                 "nosotros más tiempo del que dice el dato.",
         "accion": "Renovar",
-        "etiquetas": ["coche de {edad_coche}", "solo {pct_leasing_activo} con leasing", "{visitas_taller} visitas al taller por coche"],
+        "etiquetas": ["coche de {edad_coche}", "solo {pct_leasing_activo} con leasing", "{visitas_taller} visitas en garantía por coche"],
         "plan": {
             "objetivo": "Que cuando cambien de coche, el siguiente sea un Mercedes.",
             "oferta": "Renovación con buena valoración de su coche actual; financiación o leasing, que casi no "
                       "han probado; seminuevos certificados para los más jóvenes del grupo.",
-            "mantenimiento": "Revisión específica para coches con años: mantenerlos en el taller oficial hasta "
+            "mantenimiento": "Primera revisión en el taller oficial gratis o con descuento, para crear la relación que "
+                             "no tienen; después, mantenimiento específico para coches con años hasta "
                              "que llegue el cambio.",
             "fidelizacion": "Invitación a probar los modelos actuales (incluidos híbridos) para que vean el salto.",
             "comunicacion": "Email y correo postal con ofertas de renovación concretas.",
@@ -127,9 +133,9 @@ SEGMENTOS = {
         "slug": "zonas-premium",
         "nombre": "Zonas premium",
         "frase": "Viven en las zonas más ricas de su país ({riqueza_relativa} el poder adquisitivo típico), casi "
-                 "todos en Suiza, y van mucho al taller. Más gama alta que la media.",
+                 "todos en Suiza. Han usado la garantía más que la media y tienen más gama alta.",
         "accion": "Elevar",
-        "etiquetas": ["{riqueza_relativa} la riqueza de su país", "{visitas_taller} visitas al taller por coche",
+        "etiquetas": ["{riqueza_relativa} la riqueza de su país", "{visitas_taller} visitas en garantía por coche",
                       "{pct_leasing_activo} con leasing activo"],
         "plan": {
             "objetivo": "Subirles de gama y darles un trato a la altura.",

@@ -13,7 +13,7 @@ KPIS = {
     "edad_coche": {"short": "Edad coche", "label": "Edad del coche principal", "unit": "años", "decimals": 1},
     "n_vehiculos": {"short": "Vehículos", "label": "Vehículos que ha tenido", "unit": "", "decimals": 1},
     "vehiculos_activos": {"short": "Activos", "label": "Vehículos activos", "unit": "", "decimals": 1},
-    "visitas_taller": {"short": "Taller", "label": "Visitas al taller por coche", "unit": "", "decimals": 1},
+    "visitas_taller": {"short": "Garantía", "label": "Visitas en garantía por coche", "unit": "", "decimals": 1},
     "riqueza_relativa": {"short": "Riqueza rel.", "label": "Poder adquisitivo frente a su país", "unit": "×", "decimals": 2},
     "pct_electrificado": {"short": "Electrificado", "label": "Con eléctrico o enchufable", "unit": "%", "decimals": 1},
     "pct_telemetria": {"short": "Datos de uso", "label": "Con datos de uso (telemetría)", "unit": "%", "decimals": 1},

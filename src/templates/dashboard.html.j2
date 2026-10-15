@@ -415,12 +415,12 @@ function vistaSegmento(main, seg) {
 
   const rel = bloque(grid, `<h2>¿Qué relación tiene con Mercedes?</h2>${leyenda(seg)}<h3>${esc(D.dims.leasing)}</h3>`);
   rel.appendChild(pareadas(distRows(seg, "leasing"), seg));
-  rel.insertAdjacentHTML("beforeend", `<h3>Antigüedad y taller</h3>`);
+  rel.insertAdjacentHTML("beforeend", `<h3>Antigüedad y garantía</h3>`);
   rel.appendChild(pareadas([
     {label: "Antigüedad (meses)", seg: seg.kpis.antiguedad_meses, base: BASE.kpis.antiguedad_meses},
   ], seg, x => fmtNum(x, 0) + " meses"));
   rel.appendChild(pareadas([
-    {label: "Visitas al taller / coche", seg: seg.kpis.visitas_taller, base: BASE.kpis.visitas_taller},
+    {label: "Visitas en garantía / coche", seg: seg.kpis.visitas_taller, base: BASE.kpis.visitas_taller},
   ], seg, x => fmtNum(x, 1)));
   rel.insertAdjacentHTML("beforeend", distTabla(seg, "leasing"));
 
