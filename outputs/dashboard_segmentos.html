@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Segmentos de clientes</title>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10);
+  --mid: #f0efec; --neg: #2a78d6; --pos: #e34948; --base: #898781;
+  --seg-0: #2a78d6;
+  --seg-1: #eb6834;
+  --seg-2: #1baf7a;
+  --seg-3: #eda100;
+  --seg-4: #e87ba4;
+  --seg-5: #008300;
+  --seg-6: #6250d6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+    --mid: #383835; --neg: #3987e5; --pos: #e66767;
+    --seg-0: #3987e5;
+    --seg-1: #d95926;
+    --seg-2: #199e70;
+    --seg-3: #c98500;
+    --seg-4: #d55181;
+    --seg-5: #008300;
+    --seg-6: #9085e9;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+  --mid: #383835; --neg: #3987e5; --pos: #e66767;
+  --seg-0: #3987e5;
+  --seg-1: #d95926;
+  --seg-2: #199e70;
+  --seg-3: #c98500;
+  --seg-4: #d55181;
+  --seg-5: #008300;
+  --seg-6: #9085e9;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink);
+       font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+header { position: sticky; top: 0; z-index: 5; background: var(--page); border-bottom: 1px solid var(--border);
+         padding: 14px 24px 12px; }
+.top { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+h1 { font-size: 20px; margin: 0; font-weight: 650; }
+.sub { color: var(--ink2); font-size: 14px; }
+.top .spacer { flex: 1; }
+nav { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.chip { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px;
+        border: 1px solid var(--border); background: var(--surface); color: var(--ink); font: inherit;
+        font-size: 14px; cursor: pointer; }
+.chip:hover { border-color: var(--muted); }
+.chip[aria-current="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); font-weight: 600; }
+.chip .pct { color: var(--ink2); font-weight: 400; }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex: none; display: inline-block; }
+.btn { font: inherit; font-size: 13px; color: var(--ink2); background: none; border: 1px solid var(--border);
+       border-radius: 8px; padding: 5px 10px; cursor: pointer; }
+.btn:hover { color: var(--ink); border-color: var(--muted); }
+main { max-width: 1440px; margin: 0 auto; padding: 20px 24px 48px; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.full { grid-column: 1 / -1; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+.card h2 { font-size: 16px; margin: 0 0 4px; font-weight: 650; }
+.card .lead { color: var(--ink2); font-size: 13.5px; margin: 0 0 12px; }
+.card h3 { font-size: 13px; color: var(--ink2); font-weight: 600; margin: 14px 0 4px; text-transform: none; }
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.tile { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+.tile .label { color: var(--ink2); font-size: 13px; }
+.tile .value { font-size: 26px; font-weight: 650; margin-top: 2px; }
+.tile .hero { font-size: 48px; font-weight: 650; line-height: 1.1; }
+.tile .delta { font-size: 13px; color: var(--ink2); margin-top: 2px; }
+.legend { display: flex; gap: 16px; font-size: 13px; color: var(--ink2); margin: 2px 0 6px; flex-wrap: wrap; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+svg { display: block; width: 100%; height: auto; overflow: visible; }
+svg text { font-family: inherit; }
+.t-label { fill: var(--ink); font-size: 13px; }
+.t-value { fill: var(--ink); font-size: 12.5px; font-weight: 600; }
+.t-muted { fill: var(--muted); font-size: 12px; }
+.hit { fill: transparent; cursor: default; }
+.go { cursor: pointer; }
+.go:hover .hover-bg, .go:focus .hover-bg { fill: var(--grid); }
+.hover-bg { fill: transparent; }
+details { margin-top: 10px; font-size: 13px; }
+summary { color: var(--ink2); cursor: pointer; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--grid); font-size: 13px; }
+td.num, th.num { text-align: right; }
+.heat { overflow-x: auto; }
+.heat table { font-variant-numeric: tabular-nums; }
+.heat th { font-weight: 600; color: var(--ink2); font-size: 12.5px; vertical-align: bottom; }
+.heat tbody th { color: var(--ink); white-space: nowrap; cursor: pointer; }
+.heat tbody tr:hover th { text-decoration: underline; }
+.heat td { text-align: center; font-size: 12.5px; padding: 8px 4px; border: 2px solid var(--surface); border-radius: 4px; }
+.scale { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--ink2); margin-top: 10px; }
+.scale .bar { height: 10px; width: 220px; border-radius: 3px;
+              background: linear-gradient(90deg, var(--neg), var(--mid), var(--pos)); }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.scard { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px;
+         border-top-width: 4px; cursor: pointer; text-align: left; font: inherit; color: inherit; }
+.scard:hover, .scard:focus { border-color: var(--muted); }
+.scard .name { font-weight: 650; font-size: 15px; }
+.scard .meta { color: var(--ink2); font-size: 13px; margin: 2px 0 8px; }
+.badge { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px;
+         border: 1px solid var(--border); color: var(--ink); }
+.scard .trait { font-size: 13.5px; margin-top: 8px; color: var(--ink); }
+.seghead { display: flex; gap: 16px; align-items: flex-start; }
+.seghead .bar { width: 6px; align-self: stretch; border-radius: 3px; }
+.seghead h2 { font-size: 26px; margin: 0; }
+.seghead .size { color: var(--ink2); margin: 2px 0 10px; }
+.seghead blockquote { margin: 0 0 12px; font-size: 16px; max-width: 900px; }
+.tags { display: flex; gap: 8px; flex-wrap: wrap; }
+.tag { font-size: 13px; padding: 4px 10px; border-radius: 999px; background: var(--page); border: 1px solid var(--border); }
+.seghead .nav2 { margin-left: auto; display: flex; gap: 8px; }
+.plan { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.plan div { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: var(--page); }
+.plan b { display: block; font-size: 13px; color: var(--ink2); margin-bottom: 4px; }
+.note { font-size: 13px; color: var(--ink2); margin-top: 10px; }
+#tip { position: fixed; z-index: 20; pointer-events: none; background: var(--surface); color: var(--ink);
+       border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px;
+       box-shadow: 0 4px 16px rgba(0,0,0,0.12); max-width: 300px; display: none; white-space: pre-line; }
+footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 0 24px 24px; }
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr; }
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .plan { grid-template-columns: 1fr; }
+  header, main { padding-left: 16px; padding-right: 16px; }
+}
+
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <h1>Segmentos de clientes</h1>
+    <span class="sub">Malackathon 2026 · reto Mercedes-Benz · <span id="n-total"></span> clientes · Suiza y Austria</span>
+    <span class="spacer"></span>
+    <button class="btn" id="tema" type="button">Tema: automático</button>
+  </div>
+  <nav id="nav" aria-label="Segmentos"></nav>
+</header>
+<main id="vista"></main>
+<footer>Solo datos agregados por segmento · Generado desde notebooks/04_interpretacion.ipynb · ← → para cambiar de segmento</footer>
+<div id="tip" role="tooltip"></div>
+<noscript><p style="padding:24px">Este dashboard necesita JavaScript. Segmentos:
+Fieles de taller, Recién llegados, Coche veterano, Electrificados, Desconectados, Multivehículo, Zonas premium.</p></noscript>
+<script id="datos" type="application/json">{"meta": {"n": 173456, "k": 7}, "kpis": {"antiguedad_meses": {"short": "Antigüedad", "label": "Antigüedad como cliente", "unit": "meses", "decimals": 0}, "edad_coche": {"short": "Edad coche", "label": "Edad del coche principal", "unit": "años", "decimals": 1}, "n_vehiculos": {"short": "Vehículos", "label": "Vehículos que ha tenido", "unit": "", "decimals": 1}, "vehiculos_activos": {"short": "Activos", "label": "Vehículos activos", "unit": "", "decimals": 1}, "visitas_taller": {"short": "Taller", "label": "Visitas al taller por coche", "unit": "", "decimals": 1}, "riqueza_relativa": {"short": "Riqueza rel.", "label": "Poder adquisitivo frente a su país", "unit": "×", "decimals": 2}, "pct_electrificado": {"short": "Electrificado", "label": "Con eléctrico o enchufable", "unit": "%", "decimals": 1}, "pct_telemetria": {"short": "Conectado", "label": "Con coche conectado", "unit": "%", "decimals": 1}, "pct_sin_activo": {"short": "Sin coche activo", "label": "Sin ningún coche activo", "unit": "%", "decimals": 1}, "pct_leasing_activo": {"short": "Leasing activo", "label": "Con leasing activo", "unit": "%", "decimals": 1}, "pct_leasing_terminado": {"short": "Leasing terminado", "label": "Con leasing terminado", "unit": "%", "decimals": 1}}, "dims": {"edad": "Edad", "pais": "País", "clase": "Clase del coche principal", "motor": "Motor del coche principal", "leasing": "Leasing"}, "categorias": {"CH": "Suiza", "AT": "Austria", "COMPACTO": "Compacto", "MEDIO": "Medio", "EJECUTIVO": "Ejecutivo", "SUV_GRANDE": "SUV grande", "LUJO_DEPORTIVO": "Lujo / deportivo", "FURGONETA": "Furgoneta", "OTRO": "Otro", "COMBUSTION": "Combustión", "MILD_HYBRID": "Mild hybrid", "PLUGIN_HYBRID": "Híbrido enchufable", "ELECTRIC": "Eléctrico", "UNKNOWN": "Desconocido", "never_active": "Nunca", "active_FL_only": "Leasing activo", "active_FL_and_CASH": "Leasing activo y contado", "was_active": "Leasing terminado"}, "colores": {"claro": ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6"], "oscuro": ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#9085e9"], "base": "#898781"}, "base": {"id": null, "n": 173456, "pct": 100.0, "kpis": {"antiguedad_meses": 33.89845146263563, "edad_coche": 4.6271358324168785, "n_vehiculos": 1.745975924730191, "vehiculos_activos": 1.0387072225809426, "visitas_taller": 2.0905708001419514, "riqueza_relativa": 1.0532635062052558, "pct_electrificado": 23.448597915321464, "pct_telemetria": 59.58110414168435, "pct_sin_activo": 10.404944193340098, "pct_leasing_activo": 26.178973341942623, "pct_leasing_terminado": 3.255004150908588}, "z": {"antiguedad_meses": 0.0, "edad_coche": 0.0, "n_vehiculos": 0.0, "vehiculos_activos": 0.0, "visitas_taller": 0.0, "riqueza_relativa": 0.0, "pct_electrificado": 0.0, "pct_telemetria": 0.0, "pct_sin_activo": 0.0, "pct_leasing_activo": 0.0, "pct_leasing_terminado": 0.0}, "dist": {"edad": {"<25": 4.748178212342035, "25-34": 15.548611751683424, "35-44": 18.879139378286137, "45-54": 21.007633059680842, "55-64": 19.605548381145653, "65+": 20.21088921686191}, "pais": {"CH": 66.16260031362421, "AT": 33.8373996863758}, "clase": {"COMPACTO": 35.83041232358639, "MEDIO": 30.164422101282167, "FURGONETA": 10.746241121667744, "EJECUTIVO": 10.04923438797159, "SUV_GRANDE": 7.740291486025274, "LUJO_DEPORTIVO": 4.121506318605295, "OTRO": 1.3478922608615442}, "motor": {"COMBUSTION": 44.05901208375611, "UNKNOWN": 18.134281892814315, "MILD_HYBRID": 16.606516926482797, "PLUGIN_HYBRID": 10.865003228484458, "ELECTRIC": 10.33518586846232}, "leasing": {"never_active": 70.56602250714879, "active_FL_only": 23.736855456138734, "was_active": 3.255004150908588, "active_FL_and_CASH": 2.4421178858038926}}, "uso": {"cobertura": 59.58110414168435, "horas_mediana": 483.22, "consumo_mediana": 8.01}, "canales": {"telefono": 86.06620699197491, "email": 98.28775020754543, "correo": 85.24006087999261}, "rasgos": [], "kpis_fmt": {"antiguedad_meses": "34 meses", "edad_coche": "4,6 años", "n_vehiculos": "1,7", "vehiculos_activos": "1,0", "visitas_taller": "2,1", "riqueza_relativa": "1,05×", "pct_electrificado": "23,4 %", "pct_telemetria": "59,6 %", "pct_sin_activo": "10,4 %", "pct_leasing_activo": "26,2 %", "pct_leasing_terminado": "3,3 %"}}, "segmentos": [{"id": 0, "n": 41811, "pct": 24.10467207822157, "kpis": {"antiguedad_meses": 47.9872043242209, "edad_coche": 5.150875204954256, "n_vehiculos": 1.2257061538829495, "vehiculos_activos": 1.0211427614742532, "visitas_taller": 4.386098554606843, "riqueza_relativa": 0.9959820643130473, "pct_electrificado": 1.6933342900193729, "pct_telemetria": 69.83808088780464, "pct_sin_activo": 1.0021286264380187, "pct_leasing_activo": 31.75001793786324, "pct_leasing_terminado": 3.4512448877089765}, "z": {"antiguedad_meses": 0.6797915721112545, "edad_coche": 0.17400371139401102, "n_vehiculos": -0.09444011504880347, "vehiculos_activos": -0.019905998661250902, "visitas_taller": 0.9774492715730786, "riqueza_relativa": -0.22529382507725396, "pct_electrificado": -0.5134853812511125, "pct_telemetria": 0.2090121933301499, "pct_sin_activo": -0.3079603226657907, "pct_leasing_activo": 0.12672696594259653, "pct_leasing_terminado": 0.011058542347829306}, "dist": {"edad": {"<25": 2.384539953600727, "25-34": 15.52462270694315, "35-44": 20.384587787902706, "45-54": 22.635191695965176, "55-64": 20.733778192341727, "65+": 18.337279663246512}, "pais": {"CH": 83.64784386883835, "AT": 16.352156131161657}, "clase": {"COMPACTO": 39.539834014972136, "MEDIO": 30.20257826887661, "FURGONETA": 11.3989141613451, "EJECUTIVO": 7.08904355313195, "SUV_GRANDE": 8.347085695151993, "LUJO_DEPORTIVO": 3.3699265743464637, "OTRO": 0.052617732175743226}, "motor": {"COMBUSTION": 56.40860060749564, "UNKNOWN": 20.245868312166653, "MILD_HYBRID": 22.17837411207577, "PLUGIN_HYBRID": 0.6505465069000981, "ELECTRIC": 0.5166104613618425}, "leasing": {"never_active": 64.79873717442779, "active_FL_only": 31.219057185908017, "was_active": 3.4512448877089765, "active_FL_and_CASH": 0.5309607519552271}}, "uso": {"cobertura": 69.83808088780464, "horas_mediana": 774.09, "consumo_mediana": 8.335}, "canales": {"telefono": 86.6494463179546, "email": 98.36167515725526, "correo": 85.60426681973642}, "rasgos": ["visitas_taller", "antiguedad_meses", "pct_electrificado"], "kpis_fmt": {"antiguedad_meses": "48 meses", "edad_coche": "5,2 años", "n_vehiculos": "1,2", "vehiculos_activos": "1,0", "visitas_taller": "4,4", "riqueza_relativa": "1,00×", "pct_electrificado": "1,7 %", "pct_telemetria": "69,8 %", "pct_sin_activo": "1,0 %", "pct_leasing_activo": "31,8 %", "pct_leasing_terminado": "3,5 %"}, "slug": "fieles-taller", "nombre": "Fieles de taller", "frase": "Clientes de hace tiempo (48 meses de media) que pasan por el taller más que nadie: 4,4 visitas por coche. Casi no tienen coches electrificados.", "accion": "Fidelizar", "etiquetas": ["4,4 visitas al taller por coche", "48 meses con nosotros", "solo 1,7 % electrificados"], "plan": {"objetivo": "Mantener y premiar su relación con el servicio oficial, que es lo que los define.", "oferta": "Renovación con prioridad y valoración de su coche actual cuando se acerque el cambio; primera prueba de un híbrido, porque casi no tienen.", "mantenimiento": "Contrato de mantenimiento con precio cerrado: ya vienen mucho al taller y así les damos tranquilidad y nos aseguramos de que sigan viniendo.", "fidelizacion": "Ventajas por antigüedad: revisiones prioritarias, coche de sustitución, regalos de aniversario como clientes.", "comunicacion": "Email y teléfono con un tono de agradecimiento por su confianza; recordatorios de servicio personalizados.", "medir": "Contratos de mantenimiento firmados y cuántos siguen viniendo al taller oficial."}, "color_idx": 0}, {"id": 1, "n": 31769, "pct": 18.31530762844756, "kpis": {"antiguedad_meses": 17.736063458088072, "edad_coche": 2.4529086152509207, "n_vehiculos": 1.182662343794265, "vehiculos_activos": 1.0371746041738803, "visitas_taller": 0.8479387663025801, "riqueza_relativa": 1.0001043671465886, "pct_electrificado": 1.4070320123390727, "pct_telemetria": 52.93210362302874, "pct_sin_activo": 0.0, "pct_leasing_activo": 34.052063332179166, "pct_leasing_terminado": 0.6201013566684505}, "z": {"antiguedad_meses": -0.7798458286993614, "edad_coche": -0.722350896339666, "n_vehiculos": -0.10225348919563194, "vehiculos_activos": -0.0017369334461147714, "visitas_taller": -0.5291200570096367, "riqueza_relativa": -0.20908038241910656, "pct_electrificado": -0.5202429198743977, "pct_telemetria": -0.13549042922254617, "pct_sin_activo": -0.3407819656039768, "pct_leasing_activo": 0.17909259024533591, "pct_leasing_terminado": -0.14848183209868923}, "dist": {"edad": {"<25": 6.424501872894961, "25-34": 15.73231766816708, "35-44": 19.188517107872453, "45-54": 19.355346406874627, "55-64": 17.608360351285846, "65+": 21.690956592905035}, "pais": {"CH": 59.56750291164342, "AT": 40.43249708835657}, "clase": {"COMPACTO": 37.16516100601215, "MEDIO": 28.32320815889704, "FURGONETA": 20.627026346438353, "EJECUTIVO": 5.313355787088042, "SUV_GRANDE": 5.536844093298498, "LUJO_DEPORTIVO": 2.3104284050489468, "OTRO": 0.7239762032169725}, "motor": {"COMBUSTION": 42.27076710000315, "UNKNOWN": 26.755642292801156, "MILD_HYBRID": 30.177216783657023, "PLUGIN_HYBRID": 0.4469766124209134, "ELECTRIC": 0.3493972111177563}, "leasing": {"never_active": 65.32783531115238, "active_FL_only": 33.27457584437659, "was_active": 0.6201013566684505, "active_FL_and_CASH": 0.7774874878025748}}, "uso": {"cobertura": 52.93210362302874, "horas_mediana": 291.155, "consumo_mediana": 7.82}, "canales": {"telefono": 86.54033806540967, "email": 98.43872957914948, "correo": 84.73354527998993}, "rasgos": ["antiguedad_meses", "edad_coche", "visitas_taller"], "kpis_fmt": {"antiguedad_meses": "18 meses", "edad_coche": "2,5 años", "n_vehiculos": "1,2", "vehiculos_activos": "1,0", "visitas_taller": "0,8", "riqueza_relativa": "1,00×", "pct_electrificado": "1,4 %", "pct_telemetria": "52,9 %", "pct_sin_activo": "0,0 %", "pct_leasing_activo": "34,1 %", "pct_leasing_terminado": "0,6 %"}, "slug": "recien-llegados", "nombre": "Recién llegados", "frase": "Llevan poco con nosotros (18 meses) y tienen un coche casi nuevo (2,5 años). Todavía apenas han pisado el taller.", "accion": "Vincular", "etiquetas": ["18 meses como clientes", "coche de 2,5 años", "0,8 visitas al taller por coche"], "plan": {"objetivo": "Convertir la primera compra en una relación: que vuelvan al taller oficial y que su próximo coche también sea un Mercedes.", "oferta": "Todavía no es momento de cambiar de coche: accesorios, extensiones de garantía y servicios conectados.", "mantenimiento": "Primera revisión con cita propuesta por nosotros, para que la hagan en el taller oficial.", "fidelizacion": "Programa de bienvenida durante el primer año: activar la app y los servicios conectados, y una experiencia de entrega cuidada.", "comunicacion": "Email con una secuencia de bienvenida; mensajes cortos y prácticos sobre su coche.", "medir": "Cuántos hacen la primera revisión en el taller oficial y cuántos activan la app."}, "color_idx": 1}, {"id": 2, "n": 31611, "pct": 18.224218245549302, "kpis": {"antiguedad_meses": 32.247255702129, "edad_coche": 8.355317607767029, "n_vehiculos": 1.1215399702635158, "vehiculos_activos": 1.0253076460725696, "visitas_taller": 0.5764580894836185, "riqueza_relativa": 0.9896388511609254, "pct_electrificado": 0.6896333554775236, "pct_telemetria": 56.25257030780425, "pct_sin_activo": 0.022144190313498468, "pct_leasing_activo": 4.662933788870963, "pct_leasing_terminado": 1.3065072284964094}, "z": {"antiguedad_meses": -0.07967127913491813, "edad_coche": 1.2386264995117244, "n_vehiculos": -0.11334851010930087, "vehiculos_activos": -0.015185888733894428, "visitas_taller": -0.6447181321305877, "riqueza_relativa": -0.2502423373198597, "pct_electrificado": -0.5371755449702003, "pct_telemetria": -0.06782740903220265, "pct_sin_activo": -0.3400567007143705, "pct_leasing_activo": -0.4894346768751886, "pct_leasing_terminado": -0.10980154315781955}, "dist": {"edad": {"<25": 10.271740849704218, "25-34": 22.957198443579767, "35-44": 18.43662016386701, "45-54": 17.538198728290784, "55-64": 14.706905823922053, "65+": 16.089335990636172}, "pais": {"CH": 54.52848691911044, "AT": 45.471513080889565}, "clase": {"COMPACTO": 35.984309259435, "MEDIO": 32.98851665559457, "FURGONETA": 5.732181835437031, "EJECUTIVO": 15.636961817088988, "SUV_GRANDE": 5.694220366328176, "LUJO_DEPORTIVO": 3.9638100661162254, "OTRO": 0.0}, "motor": {"COMBUSTION": 70.84559172439974, "UNKNOWN": 19.607098794723356, "MILD_HYBRID": 9.348011768055423, "PLUGIN_HYBRID": 0.18031697826705895, "ELECTRIC": 0.018980734554427257}, "leasing": {"never_active": 94.03055898263263, "active_FL_only": 4.517414823953687, "was_active": 1.3065072284964094, "active_FL_and_CASH": 0.14551896491727562}}, "uso": {"cobertura": 56.25257030780425, "horas_mediana": 583.4549999999999, "consumo_mediana": 7.7}, "canales": {"telefono": 87.15953307392996, "email": 98.23479168643826, "correo": 86.64705324096043}, "rasgos": ["edad_coche", "visitas_taller", "pct_electrificado"], "kpis_fmt": {"antiguedad_meses": "32 meses", "edad_coche": "8,4 años", "n_vehiculos": "1,1", "vehiculos_activos": "1,0", "visitas_taller": "0,6", "riqueza_relativa": "0,99×", "pct_electrificado": "0,7 %", "pct_telemetria": "56,3 %", "pct_sin_activo": "0,0 %", "pct_leasing_activo": "4,7 %", "pct_leasing_terminado": "1,3 %"}, "slug": "coche-veterano", "nombre": "Coche veterano", "frase": "Tienen el coche más antiguo de la cartera (8,4 años), sobre todo de combustión y comprado sin leasing. Ojo: en muchos la antigüedad como cliente es un valor por defecto, así que pueden llevar con nosotros más tiempo del que dice el dato.", "accion": "Renovar", "etiquetas": ["coche de 8,4 años", "solo 4,7 % con leasing", "0,6 visitas al taller por coche"], "plan": {"objetivo": "Que cuando cambien de coche, el siguiente sea un Mercedes.", "oferta": "Renovación con buena valoración de su coche actual; financiación o leasing, que casi no han probado; seminuevos certificados para los más jóvenes del grupo.", "mantenimiento": "Revisión específica para coches con años: mantenerlos en el taller oficial hasta que llegue el cambio.", "fidelizacion": "Invitación a probar los modelos actuales (incluidos híbridos) para que vean el salto.", "comunicacion": "Email y correo postal con ofertas de renovación concretas.", "medir": "Pruebas de conducción solicitadas y renovaciones cerradas."}, "color_idx": 2}, {"id": 3, "n": 27575, "pct": 15.897403376072319, "kpis": {"antiguedad_meses": 29.24892112420671, "edad_coche": 2.853647888884998, "n_vehiculos": 1.2625566636446057, "vehiculos_activos": 1.004242973708069, "visitas_taller": 2.0899552734965248, "riqueza_relativa": 1.0278775065893362, "pct_electrificado": 100.0, "pct_telemetria": 61.472348141432455, "pct_sin_activo": 3.452402538531278, "pct_leasing_activo": 34.92293744333635, "pct_leasing_terminado": 2.110607434270172}, "z": {"antiguedad_meses": -0.22434289034607446, "edad_coche": -0.5892119257561756, "n_vehiculos": -0.08775095766064589, "vehiculos_activos": -0.039058715650727355, "visitas_taller": -0.0002620948799402921, "riqueza_relativa": -0.09984575750803804, "pct_electrificado": 1.8068282950633534, "pct_telemetria": 0.03853894439795396, "pct_sin_activo": -0.2277091320283866, "pct_leasing_activo": 0.19890274109311756, "pct_leasing_terminado": -0.06448895249784696}, "dist": {"edad": {"<25": 2.357207615593835, "25-34": 9.102447869446962, "35-44": 16.47144152311877, "45-54": 23.13689936536718, "55-64": 24.094288304623753, "65+": 24.8377153218495}, "pais": {"CH": 53.03717135086129, "AT": 46.96282864913871}, "clase": {"COMPACTO": 36.98277425203989, "MEDIO": 31.499546690843154, "FURGONETA": 0.39165911151405264, "EJECUTIVO": 13.106074342701724, "SUV_GRANDE": 9.791477787851315, "LUJO_DEPORTIVO": 3.6119673617407075, "OTRO": 4.616500453309157}, "motor": {"COMBUSTION": 0.10879419764279238, "UNKNOWN": 1.1242067089755214, "MILD_HYBRID": 0.1885766092475068, "PLUGIN_HYBRID": 50.93381686310063, "ELECTRIC": 47.64460562103354}, "leasing": {"never_active": 62.96645512239347, "active_FL_only": 33.929283771532184, "was_active": 2.110607434270172, "active_FL_and_CASH": 0.9936536718041705}}, "uso": {"cobertura": 61.472348141432455, "horas_mediana": 167.5, "consumo_mediana": 6.13}, "canales": {"telefono": 84.50045330915684, "email": 98.45512239347235, "correo": 83.62284678150499}, "rasgos": ["pct_electrificado", "edad_coche", "pct_sin_activo"], "kpis_fmt": {"antiguedad_meses": "29 meses", "edad_coche": "2,9 años", "n_vehiculos": "1,3", "vehiculos_activos": "1,0", "visitas_taller": "2,1", "riqueza_relativa": "1,03×", "pct_electrificado": "100,0 %", "pct_telemetria": "61,5 %", "pct_sin_activo": "3,5 %", "pct_leasing_activo": "34,9 %", "pct_leasing_terminado": "2,1 %"}, "slug": "electrificados", "nombre": "Electrificados", "frase": "Ya se han pasado a la electrificación: prácticamente todos (100,0 %) tienen un eléctrico o un enchufable, con un coche reciente (2,9 años). Son algo mayores que la media.", "accion": "Acompañar", "etiquetas": ["100,0 % con eléctrico o enchufable", "coche de 2,9 años", "34,9 % con leasing activo"], "plan": {"objetivo": "Que su siguiente coche siga siendo eléctrico y Mercedes, y cuidar su experiencia de carga.", "oferta": "Siguiente eléctrico de la gama EQ; paso de enchufable a eléctrico puro al terminar su leasing.", "mantenimiento": "Revisión específica de batería y sistema de carga; instalación y revisión del wallbox.", "fidelizacion": "Ventajas en carga pública y servicios conectados pensados para eléctricos.", "comunicacion": "Email con contenido práctico sobre carga, autonomía y novedades eléctricas.", "medir": "Cuántos repiten con un eléctrico y cuánto usan los servicios de carga."}, "color_idx": 3}, {"id": 4, "n": 15660, "pct": 9.028226178396826, "kpis": {"antiguedad_meses": 17.36192361732022, "edad_coche": 5.628685223859643, "n_vehiculos": 1.2706896551724138, "vehiculos_activos": 0.0, "visitas_taller": 1.1823712217965092, "riqueza_relativa": 1.0089106969794681, "pct_electrificado": 14.776500638569603, "pct_telemetria": 37.005108556832695, "pct_sin_activo": 100.0, "pct_leasing_activo": 0.0, "pct_leasing_terminado": 11.736909323116219}, "z": {"antiguedad_meses": -0.7978983215668114, "edad_coche": 0.3327481575638401, "n_vehiculos": -0.08627464537302951, "vehiculos_activos": -1.1771784204784546, "visitas_taller": -0.3867167428361872, "riqueza_relativa": -0.17444417796261164, "pct_electrificado": -0.20468587524817136, "pct_telemetria": -0.46004378001407276, "pct_sin_activo": 2.9344106665881444, "pct_leasing_activo": -0.5955044527099633, "pct_leasing_terminado": 0.4779716437394914}, "dist": {"edad": {"<25": 5.102171136653895, "25-34": 18.486590038314176, "35-44": 17.70114942528736, "45-54": 17.305236270753515, "55-64": 14.604086845466155, "65+": 26.8007662835249}, "pais": {"CH": 64.46360153256705, "AT": 35.53639846743295}, "clase": {"COMPACTO": 37.337164750957854, "MEDIO": 28.72286079182631, "FURGONETA": 10.344827586206897, "EJECUTIVO": 10.676883780332057, "SUV_GRANDE": 6.743295019157087, "LUJO_DEPORTIVO": 5.312899106002554, "OTRO": 0.8620689655172413}, "motor": {"COMBUSTION": 51.11111111111111, "UNKNOWN": 21.13026819923372, "MILD_HYBRID": 14.086845466155811, "PLUGIN_HYBRID": 6.443167305236271, "ELECTRIC": 7.228607918263092}, "leasing": {"never_active": 88.26309067688378, "active_FL_only": 0.0, "was_active": 11.736909323116219, "active_FL_and_CASH": 0.0}}, "uso": {"cobertura": 37.005108556832695, "horas_mediana": 415.71000000000004, "consumo_mediana": 8.18}, "canales": {"telefono": 86.18135376756067, "email": 97.84802043422734, "correo": 85.98978288633461}, "rasgos": ["pct_sin_activo", "vehiculos_activos", "antiguedad_meses"], "kpis_fmt": {"antiguedad_meses": "17 meses", "edad_coche": "5,6 años", "n_vehiculos": "1,3", "vehiculos_activos": "0,0", "visitas_taller": "1,2", "riqueza_relativa": "1,01×", "pct_electrificado": "14,8 %", "pct_telemetria": "37,0 %", "pct_sin_activo": "100,0 %", "pct_leasing_activo": "0,0 %", "pct_leasing_terminado": "11,7 %"}, "slug": "desconectados", "nombre": "Desconectados", "frase": "Han tenido coche con nosotros, pero hoy no tienen ninguno activo. Eso no prueba que se hayan ido (pueden haberlo vendido o desvinculado), pero es la señal de alarma más clara. El 11,7 % tiene un leasing ya terminado.", "accion": "Recuperar", "etiquetas": ["100,0 % sin coche activo", "17 meses como clientes", "11,7 % con leasing terminado"], "plan": {"objetivo": "Averiguar quién se ha ido de verdad y recuperar a los que todavía se puede.", "oferta": "Oferta de vuelta para quienes terminaron su leasing: un coche nuevo con condiciones de reenganche.", "mantenimiento": "Si aún tienen el coche, invitación a una revisión en el taller oficial.", "fidelizacion": "Encuesta corta de por qué ya no tienen coche activo, para aprender y personalizar.", "comunicacion": "Teléfono para los que terminaron leasing y email para el resto; tono cercano, sin presión.", "medir": "Cuántos vuelven a tener un vehículo activo."}, "color_idx": 4}, {"id": 5, "n": 15327, "pct": 8.836246656212527, "kpis": {"antiguedad_meses": 54.344555359822536, "edad_coche": 2.2611648518646397, "n_vehiculos": 7.179356690807072, "vehiculos_activos": 2.2444052978404123, "visitas_taller": 1.823828921114663, "riqueza_relativa": 1.0254272726596283, "pct_electrificado": 47.693612579108766, "pct_telemetria": 73.4781757682521, "pct_sin_activo": 2.590200300123964, "pct_leasing_activo": 47.53050172897501, "pct_leasing_terminado": 5.519671168526131}, "z": {"antiguedad_meses": 0.9865379319496991, "edad_coche": -0.786054578390965, "n_vehiculos": 0.9862750699827197, "vehiculos_activos": 1.3664310066903889, "visitas_taller": -0.11358026704148262, "riqueza_relativa": -0.10948278053194778, "pct_electrificado": 0.5722505050959024, "pct_telemetria": 0.2831884573233345, "pct_sin_activo": -0.2559479162152985, "pct_leasing_activo": 0.48569247008131333, "pct_leasing_terminado": 0.12761833514480733}, "dist": {"edad": {"<25": 2.035623409669211, "25-34": 12.53996215828277, "35-44": 20.428002870750962, "45-54": 25.31480394075814, "55-64": 24.747178182292686, "65+": 14.934429438246234}, "pais": {"CH": 60.68376068376068, "AT": 39.31623931623932}, "clase": {"COMPACTO": 22.724603640634175, "MEDIO": 26.574019703790697, "FURGONETA": 19.85385267828016, "EJECUTIVO": 10.471716578586808, "SUV_GRANDE": 9.499575911789652, "LUJO_DEPORTIVO": 7.20297514190644, "OTRO": 3.67325634501207}, "motor": {"COMBUSTION": 31.428198603771122, "UNKNOWN": 19.181835975729104, "MILD_HYBRID": 18.640307953285053, "PLUGIN_HYBRID": 15.534677366738435, "ELECTRIC": 15.214980100476282}, "leasing": {"never_active": 46.94982710249886, "active_FL_only": 26.391335551640893, "was_active": 5.519671168526131, "active_FL_and_CASH": 21.139166177334115}}, "uso": {"cobertura": 73.4781757682521, "horas_mediana": 411.875, "consumo_mediana": 8.555}, "canales": {"telefono": 84.65453121941671, "email": 98.33626932863574, "correo": 85.01337508971096}, "rasgos": ["vehiculos_activos", "antiguedad_meses", "n_vehiculos"], "kpis_fmt": {"antiguedad_meses": "54 meses", "edad_coche": "2,3 años", "n_vehiculos": "7,2", "vehiculos_activos": "2,2", "visitas_taller": "1,8", "riqueza_relativa": "1,03×", "pct_electrificado": "47,7 %", "pct_telemetria": "73,5 %", "pct_sin_activo": "2,6 %", "pct_leasing_activo": "47,5 %", "pct_leasing_terminado": "5,5 %"}, "slug": "multivehiculo", "nombre": "Multivehículo", "frase": "Tienen muchos coches (7,2 de media) y son los clientes más antiguos (54 meses). Aquí están casi todas las flotas y cuentas grandes, y son los que más usan el leasing.", "accion": "Ampliar", "etiquetas": ["7,2 vehículos de media", "54 meses con nosotros", "47,5 % con leasing activo"], "plan": {"objetivo": "Tratarlos como cuentas clave y crecer dentro de cada una.", "oferta": "Renovación de flota con condiciones por volumen, incluidas furgonetas y eléctricos para empresa.", "mantenimiento": "Contrato de mantenimiento de flota con un único punto de contacto.", "fidelizacion": "Un gestor de cuenta y condiciones que mejoran con el tiempo.", "comunicacion": "Teléfono, con su gestor de cuenta; nada de campañas masivas.", "medir": "Vehículos renovados por cuenta y cuentas que siguen con nosotros."}, "color_idx": 5}, {"id": 6, "n": 9703, "pct": 5.593925837099898, "kpis": {"antiguedad_meses": 39.08822013810162, "edad_coche": 4.35631561845049, "n_vehiculos": 1.4248170668865299, "vehiculos_activos": 1.0328764299701123, "visitas_taller": 3.0891500397297573, "riqueza_relativa": 1.793202244990997, "pct_electrificado": 21.653096980315368, "pct_telemetria": 57.106049675358136, "pct_sin_activo": 6.317633721529424, "pct_leasing_activo": 30.16592806348552, "pct_leasing_terminado": 3.3700917242090074}, "z": {"antiguedad_meses": 0.25040974467003335, "edad_coche": -0.08997551992772636, "n_vehiculos": -0.05829721652731399, "vehiculos_activos": -0.006608101962263755, "visitas_taller": 0.4252009362311667, "riqueza_relativa": 2.9102554558172513, "pct_electrificado": -0.0423788696854062, "pct_telemetria": -0.05043557915972656, "pct_sin_activo": -0.13386729142756018, "pct_leasing_activo": 0.09069298701748187, "pct_leasing_terminado": 0.006485405751131889}, "dist": {"edad": {"<25": 1.9581572709471295, "25-34": 9.244563537050396, "35-44": 19.11779861898382, "45-54": 23.82768216015665, "55-64": 24.435741523240235, "65+": 21.416056889621764}, "pais": {"CH": 99.01061527362671, "AT": 0.9893847263732867}, "clase": {"COMPACTO": 29.97011233639081, "MEDIO": 31.031639699062147, "FURGONETA": 7.605895083994641, "EJECUTIVO": 9.73925590023704, "SUV_GRANDE": 12.006595898175823, "LUJO_DEPORTIVO": 8.461300628671545, "OTRO": 1.1852004534679996}, "motor": {"COMBUSTION": 42.90425641554159, "UNKNOWN": 17.860455529217766, "MILD_HYBRID": 19.323920436978252, "PLUGIN_HYBRID": 9.687725445738431, "ELECTRIC": 10.223642172523961}, "leasing": {"never_active": 66.46398021230547, "active_FL_only": 28.032567247243122, "was_active": 3.3700917242090074, "active_FL_and_CASH": 2.133360816242399}}, "uso": {"cobertura": 57.106049675358136, "horas_mediana": 499.8175, "consumo_mediana": 8.8}, "canales": {"telefono": 84.93249510460682, "email": 97.80480263835926, "correo": 84.48933319591879}, "rasgos": ["riqueza_relativa", "visitas_taller", "antiguedad_meses"], "kpis_fmt": {"antiguedad_meses": "39 meses", "edad_coche": "4,4 años", "n_vehiculos": "1,4", "vehiculos_activos": "1,0", "visitas_taller": "3,1", "riqueza_relativa": "1,79×", "pct_electrificado": "21,7 %", "pct_telemetria": "57,1 %", "pct_sin_activo": "6,3 %", "pct_leasing_activo": "30,2 %", "pct_leasing_terminado": "3,4 %"}, "slug": "zonas-premium", "nombre": "Zonas premium", "frase": "Viven en las zonas más ricas de su país (1,79× el poder adquisitivo típico), casi todos en Suiza, y van mucho al taller. Más gama alta que la media.", "accion": "Elevar", "etiquetas": ["1,79× la riqueza de su país", "3,1 visitas al taller por coche", "30,2 % con leasing activo"], "plan": {"objetivo": "Subirles de gama y darles un trato a la altura.", "oferta": "Modelos de gama alta (Clase S, EQS, AMG, Clase G) y configuraciones a medida.", "mantenimiento": "Servicio premium: recogida y entrega del coche en casa.", "fidelizacion": "Eventos y experiencias exclusivas, acceso anticipado a lanzamientos.", "comunicacion": "Teléfono con un asesor personal y correo postal cuidado.", "medir": "Cuántos suben de gama y el valor medio de su compra."}, "color_idx": 6}]}</script>
+<script>
+
+"use strict";
+const D = JSON.parse(document.getElementById("datos").textContent);
+const SEGS = D.segmentos, BASE = D.base, KPIS = D.kpis;
+const NS = "http://www.w3.org/2000/svg";
+const ORDEN = ["general", ...SEGS.map(s => s.slug)];
+
+// ---------- utilidades ----------
+function fmtNum(x, d) {
+  if (x === null || x === undefined || Number.isNaN(x)) return "—";
+  const s = Math.abs(x).toFixed(d);
+  const [ent, dec] = s.split(".");
+  const signo = x < 0 && Number(s) !== 0 ? "-" : "";
+  return signo + ent.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + (dec ? "," + dec : "");
+}
+const pct = x => fmtNum(x, 1) + " %";
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+const segVar = i => `var(--seg-${i})`;
+const catLabel = c => D.categorias[c] || c;
+
+function svgEl(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) e.setAttribute(k, v);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function svgText(parent, x, y, txt, cls, anchor) {
+  const t = svgEl("text", {x, y, class: cls, "text-anchor": anchor || "start", "dominant-baseline": "middle"}, parent);
+  t.textContent = txt;
+  return t;
+}
+// Barra horizontal: extremo de datos redondeado, base recta
+function hbarPath(x0, y, w, h, r) {
+  const aw = Math.abs(w);
+  if (aw < 0.5) return "";
+  r = Math.min(r, aw, h / 2);
+  const xe = x0 + w, s = w >= 0 ? -1 : 1;
+  return `M${x0},${y} H${xe + s * r} Q${xe},${y} ${xe},${y + r} V${y + h - r} Q${xe},${y + h} ${xe + s * r},${y + h} H${x0} Z`;
+}
+function deltaTexto(key, seg, base) {
+  const spec = KPIS[key], d = seg - base;
+  if (spec.unit === "%") return (d >= 0 ? "+" : "") + fmtNum(d, 1) + " pp";
+  const u = spec.unit && spec.unit !== "×" ? " " + spec.unit : "";
+  return (d >= 0 ? "+" : "") + fmtNum(d, spec.decimals) + u;
+}
+function flecha(z) { return Math.abs(z) < 0.1 ? "≈" : (z > 0 ? "▲" : "▼"); }
+function detalles(titulo, cabecera, filas) {
+  const head = cabecera.map((h, i) => `<th class="${i ? "num" : ""}">${esc(h)}</th>`).join("");
+  const body = filas.map(f => "<tr>" + f.map((c, i) => `<td class="${i ? "num" : ""}">${esc(c)}</td>`).join("") + "</tr>").join("");
+  return `<details><summary>ver tabla${titulo ? " · " + esc(titulo) : ""}</summary><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></details>`;
+}
+function leyenda(seg) {
+  return `<div class="legend"><span><i class="sw" style="background:${segVar(seg.color_idx)}"></i>${esc(seg.nombre)}</span>` +
+         `<span><i class="sw" style="background:var(--base)"></i>Total de clientes</span></div>`;
+}
+
+// ---------- gráficos ----------
+// Barras sencillas (una serie, color por fila). rows: {label, value, color, valueLabel, tip, go}
+function barras(rows, opts) {
+  const W = 560, LW = opts.labelW || 170, RH = 32, BH = 18, VW = 70;
+  const max = opts.max || Math.max(...rows.map(r => r.value));
+  const svg = svgEl("svg", {viewBox: `0 0 ${W} ${rows.length * RH + 4}`, role: "img", "aria-label": opts.aria || ""});
+  rows.forEach((r, i) => {
+    const y = i * RH + 2, g = svgEl("g", r.go ? {class: "go", "data-go": r.go, tabindex: 0} : {}, svg);
+    svgEl("rect", {x: 0, y, width: W, height: RH, class: "hover-bg", rx: 6}, g);
+    if (r.dot) svgEl("circle", {cx: 6, cy: y + RH / 2, r: 5, fill: r.color}, g);
+    svgText(g, r.dot ? 18 : 0, y + RH / 2, r.label, "t-label");
+    const w = (W - LW - VW) * r.value / max;
+    svgEl("path", {d: hbarPath(LW, y + (RH - BH) / 2, w, BH, 4), fill: r.color}, g);
+    svgText(g, LW + w + 6, y + RH / 2, r.valueLabel, "t-value");
+    const hit = svgEl("rect", {x: 0, y, width: W, height: RH, class: "hit"}, g);
+    hit.dataset.tip = r.tip;
+  });
+  return svg;
+}
+
+// Segmento frente a total por categoría. rows: {label, seg, base}; valores en %
+function pareadas(rows, seg, fmt) {
+  fmt = fmt || pct;
+  const W = 600, LW = 200, RH = 34, BH = 11, VW = 64;
+  const max = Math.max(1, ...rows.map(r => Math.max(r.seg ?? 0, r.base ?? 0)));
+  const svg = svgEl("svg", {viewBox: `0 0 ${W} ${rows.length * RH + 4}`, role: "img",
+                            "aria-label": `${seg.nombre} frente al total`});
+  svgEl("line", {x1: LW, x2: LW, y1: 0, y2: rows.length * RH + 4, stroke: "var(--axis)", "stroke-width": 1}, svg);
+  rows.forEach((r, i) => {
+    const y = i * RH + 2, g = svgEl("g", {}, svg);
+    svgText(g, 0, y + RH / 2, r.label, "t-label");
+    const ws = (W - LW - VW) * (r.seg ?? 0) / max, wb = (W - LW - VW) * (r.base ?? 0) / max;
+    svgEl("path", {d: hbarPath(LW, y + RH / 2 - BH - 1, ws, BH, 4), fill: segVar(seg.color_idx)}, g);
+    svgEl("path", {d: hbarPath(LW, y + RH / 2 + 1, wb, BH, 4), fill: "var(--base)"}, g);
+    svgText(g, LW + Math.max(ws, wb) + 6, y + RH / 2, fmt(r.seg), "t-value");
+    const hit = svgEl("rect", {x: 0, y, width: W, height: RH, class: "hit"}, g);
+    hit.dataset.tip = `${r.label}\n${seg.nombre}: ${fmt(r.seg)}\nTotal: ${fmt(r.base)}`;
+  });
+  return svg;
+}
+
+// Diferencia con la media (z), ordenada de más a menos distinta
+function divergentes(seg) {
+  const keys = Object.keys(KPIS).sort((a, b) => Math.abs(seg.z[b]) - Math.abs(seg.z[a]));
+  const W = 640, LW = 250, RH = 28, BH = 14;
+  const lim = Math.min(3.2, Math.max(1.5, ...keys.map(k => Math.abs(seg.z[k]))));
+  const PW = W - LW - 20, cx = LW + PW / 2, esc_ = (PW / 2 - 60) / lim;
+  const H = keys.length * RH + 24;
+  const svg = svgEl("svg", {viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": `${seg.nombre}: diferencia con la media`});
+  svgText(svg, cx - 8, 8, "◄ por debajo de la media", "t-muted", "end");
+  svgText(svg, cx + 8, 8, "por encima ►", "t-muted", "start");
+  svgEl("line", {x1: cx, x2: cx, y1: 18, y2: H, stroke: "var(--axis)", "stroke-width": 1}, svg);
+  keys.forEach((k, i) => {
+    const z = seg.z[k], y = 20 + i * RH, g = svgEl("g", {}, svg);
+    const fuerte = Math.abs(z) >= 0.5;
+    svgText(g, 0, y + RH / 2, KPIS[k].label, "t-label");
+    const w = Math.max(-lim, Math.min(lim, z)) * esc_;
+    svgEl("path", {d: hbarPath(cx, y + (RH - BH) / 2, w, BH, 4), fill: fuerte ? segVar(seg.color_idx) : "var(--base)"}, g);
+    const tx = cx + w + (w >= 0 ? 6 : -6);
+    svgText(g, tx, y + RH / 2, seg.kpis_fmt[k], fuerte ? "t-value" : "t-muted", w >= 0 ? "start" : "end");
+    const hit = svgEl("rect", {x: 0, y, width: W, height: RH, class: "hit"}, g);
+    hit.dataset.tip = `${KPIS[k].label}\n${seg.nombre}: ${seg.kpis_fmt[k]}\nMedia: ${BASE.kpis_fmt[k]}\n` +
+                      `${flecha(z)} ${fmtNum(Math.abs(z), 2)} desviaciones ${z >= 0 ? "por encima" : "por debajo"}`;
+  });
+  return svg;
+}
+
+// Medidores de 0 a 100 % con una marca para el total
+function medidores(rows, seg) {
+  const W = 560, LW = 150, RH = 34, BH = 12, VW = 64;
+  const svg = svgEl("svg", {viewBox: `0 0 ${W} ${rows.length * RH + 4}`, role: "img", "aria-label": "Canales de contacto"});
+  rows.forEach((r, i) => {
+    const y = i * RH + 2, g = svgEl("g", {}, svg), PW = W - LW - VW;
+    svgText(g, 0, y + RH / 2, r.label, "t-label");
+    svgEl("rect", {x: LW, y: y + (RH - BH) / 2, width: PW, height: BH, rx: 4, fill: "var(--grid)"}, g);
+    svgEl("path", {d: hbarPath(LW, y + (RH - BH) / 2, PW * r.seg / 100, BH, 4), fill: segVar(seg.color_idx)}, g);
+    const xb = LW + PW * r.base / 100;
+    svgEl("line", {x1: xb, x2: xb, y1: y + 6, y2: y + RH - 6, stroke: "var(--ink)", "stroke-width": 2}, g);
+    svgText(g, LW + PW + 8, y + RH / 2, pct(r.seg), "t-value");
+    const hit = svgEl("rect", {x: 0, y, width: W, height: RH, class: "hit"}, g);
+    hit.dataset.tip = `${r.label}\n${seg.nombre}: ${pct(r.seg)}\nTotal: ${pct(r.base)} (la marca negra)`;
+  });
+  return svg;
+}
+
+function bloque(contenedor, html, cls) {
+  const div = document.createElement("section");
+  div.className = "card " + (cls || "");
+  div.innerHTML = html;
+  contenedor.appendChild(div);
+  return div;
+}
+function distRows(seg, dim) {
+  return Object.keys(BASE.dist[dim]).map(c => ({label: catLabel(c), seg: seg.dist[dim][c], base: BASE.dist[dim][c]}));
+}
+function distTabla(seg, dim) {
+  return detalles(D.dims[dim], ["Categoría", seg.nombre, "Total"],
+                  distRows(seg, dim).map(r => [r.label, pct(r.seg), pct(r.base)]));
+}
+
+// ---------- vista general ----------
+function vistaGeneral(main) {
+  const tiles = document.createElement("div");
+  tiles.className = "tiles full";
+  tiles.innerHTML = [
+    `<div class="tile"><div class="label">Clientes</div><div class="hero">${fmtNum(D.meta.n, 0)}</div></div>`,
+    `<div class="tile"><div class="label">Segmentos</div><div class="value">${D.meta.k}</div><div class="delta">definidos con K-Means</div></div>`,
+    `<div class="tile"><div class="label">${esc(KPIS.pct_electrificado.label)}</div><div class="value">${esc(BASE.kpis_fmt.pct_electrificado)}</div><div class="delta">de todos los clientes</div></div>`,
+    `<div class="tile"><div class="label">${esc(KPIS.pct_sin_activo.label)}</div><div class="value">${esc(BASE.kpis_fmt.pct_sin_activo)}</div><div class="delta">de todos los clientes</div></div>`,
+  ].join("");
+  const grid = document.createElement("div");
+  grid.className = "grid";
+  main.appendChild(grid);
+  grid.appendChild(tiles);
+
+  const tam = bloque(grid, `<h2>¿Cuánto pesa cada segmento?</h2><p class="lead">Porcentaje de clientes. Pulsa uno para ver su ficha.</p>`);
+  tam.appendChild(barras(SEGS.map(s => ({
+    label: s.nombre, value: s.pct, color: segVar(s.color_idx), dot: true, go: s.slug,
+    valueLabel: pct(s.pct), tip: `${s.nombre}\n${fmtNum(s.n, 0)} clientes (${pct(s.pct)})\nAcción: ${s.accion}`,
+  })), {aria: "Tamaño de cada segmento"}));
+  tam.insertAdjacentHTML("beforeend", detalles("", ["Segmento", "Clientes", "%"], SEGS.map(s => [s.nombre, fmtNum(s.n, 0), pct(s.pct)])));
+
+  bloque(grid, `<h2>Cómo leer este dashboard</h2>
+    <p class="lead">Cada segmento se compara siempre con el total de clientes: el segmento va en su color y el total en gris.</p>
+    <p class="note">· Los segmentos los definen la relación con la marca y el ciclo de vida del coche (antigüedad, edad del coche, actividad, electrificación), no el modelo de coche.</p>
+    <p class="note">· "Sin coche activo" es una señal de posible fuga, no la prueba de que el cliente se haya ido.</p>
+    <p class="note">· En un 12 % de los clientes la antigüedad es un valor por defecto, no su antigüedad real.</p>
+    <p class="note">· Los canales de contacto son casi iguales en todos los segmentos: el email llega a prácticamente todos.</p>`);
+
+  const keys = Object.keys(KPIS);
+  const filas = SEGS.map(s => {
+    const celdas = keys.map(k => {
+      const z = s.z[k], t = Math.min(Math.abs(z) / 2, 1), polo = z >= 0 ? "--pos" : "--neg";
+      const fondo = `color-mix(in oklab, var(${polo}) ${Math.round(t * 100)}%, var(--mid))`;
+      const tinta = t > 0.6 ? "#ffffff" : "var(--ink)";
+      const tip = `${s.nombre} · ${KPIS[k].label}\n${s.kpis_fmt[k]} (media: ${BASE.kpis_fmt[k]})`;
+      return `<td style="background:${fondo};color:${tinta}" data-tip="${esc(tip)}">${esc(s.kpis_fmt[k])}</td>`;
+    }).join("");
+    return `<tr data-go="${s.slug}" tabindex="0"><th><span class="dot" style="background:${segVar(s.color_idx)}"></span> ${esc(s.nombre)}</th>${celdas}</tr>`;
+  }).join("");
+  const media = `<tr><th>Total de clientes</th>${keys.map(k => `<td>${esc(BASE.kpis_fmt[k])}</td>`).join("")}</tr>`;
+  bloque(grid, `<h2>¿Qué distingue a cada segmento?</h2>
+    <p class="lead">Rojo: por encima de la media; azul: por debajo. Cuanto más intenso, más se separa del total. En cada casilla, el valor real del segmento. Pulsa una fila para abrir su ficha.</p>
+    <div class="heat"><table><thead><tr><th></th>${keys.map(k => `<th>${esc(KPIS[k].short)}</th>`).join("")}</tr></thead>
+    <tbody>${filas}${media}</tbody></table></div>
+    <div class="scale"><span>por debajo</span><span class="bar"></span><span>por encima de la media</span></div>`, "full");
+
+  const cards = SEGS.map(s => `<button class="scard" data-go="${s.slug}" style="border-top-color:${segVar(s.color_idx)}">
+      <div class="name">${esc(s.nombre)}</div><div class="meta">${pct(s.pct)} · ${fmtNum(s.n, 0)} clientes</div>
+      <span class="badge">${esc(s.accion)}</span><div class="trait">${esc(s.etiquetas[0])}</div></button>`).join("");
+  bloque(grid, `<h2>Los siete segmentos en una línea</h2><p class="lead">Su rasgo más claro y lo que haríamos con ellos.</p><div class="cards">${cards}</div>`, "full");
+}
+
+// ---------- ficha de segmento ----------
+function vistaSegmento(main, seg) {
+  const grid = document.createElement("div");
+  grid.className = "grid";
+  main.appendChild(grid);
+  const prev = ORDEN[(ORDEN.indexOf(seg.slug) - 1 + ORDEN.length) % ORDEN.length];
+  const next = ORDEN[(ORDEN.indexOf(seg.slug) + 1) % ORDEN.length];
+
+  bloque(grid, `<div class="seghead"><span class="bar" style="background:${segVar(seg.color_idx)}"></span><div>
+      <h2>${esc(seg.nombre)}</h2>
+      <div class="size">${fmtNum(seg.n, 0)} clientes · ${pct(seg.pct)} del total · <span class="badge">${esc(seg.accion)}</span></div>
+      <blockquote>${esc(seg.frase)}</blockquote>
+      <div class="tags">${seg.etiquetas.map(e => `<span class="tag">${esc(e)}</span>`).join("")}</div></div>
+      <div class="nav2"><button class="btn" data-go="${prev}" type="button">← anterior</button>
+      <button class="btn" data-go="${next}" type="button">siguiente →</button></div></div>`, "full");
+
+  const claves = ["antiguedad_meses", "edad_coche", "n_vehiculos", "vehiculos_activos", "visitas_taller",
+                  "pct_electrificado", "riqueza_relativa", "pct_leasing_activo"];
+  const tiles = document.createElement("div");
+  tiles.className = "tiles full";
+  tiles.innerHTML = claves.map(k => `<div class="tile" data-tip="${esc(KPIS[k].label + "\n" + seg.nombre + ": " + seg.kpis_fmt[k] + "\nMedia: " + BASE.kpis_fmt[k])}">
+      <div class="label">${esc(KPIS[k].label)}</div><div class="value">${esc(seg.kpis_fmt[k])}</div>
+      <div class="delta">${flecha(seg.z[k])} ${esc(deltaTexto(k, seg.kpis[k], BASE.kpis[k]))} · media ${esc(BASE.kpis_fmt[k])}</div></div>`).join("");
+  grid.appendChild(tiles);
+
+  const dif = bloque(grid, `<h2>¿En qué se diferencia?</h2><p class="lead">Distancia a la media de todos los clientes, de más a menos distinta. En color, las diferencias claras.</p>`);
+  dif.appendChild(divergentes(seg));
+  dif.insertAdjacentHTML("beforeend", detalles("", ["Indicador", seg.nombre, "Media", "Diferencia (desv.)"],
+    Object.keys(KPIS).map(k => [KPIS[k].label, seg.kpis_fmt[k], BASE.kpis_fmt[k], fmtNum(seg.z[k], 2)])));
+
+  const quien = bloque(grid, `<h2>¿Quién es por dentro?</h2>${leyenda(seg)}<h3>${esc(D.dims.edad)}</h3>`);
+  quien.appendChild(pareadas(distRows(seg, "edad"), seg));
+  quien.insertAdjacentHTML("beforeend", `<h3>${esc(D.dims.pais)}</h3>`);
+  quien.appendChild(pareadas(distRows(seg, "pais"), seg));
+  quien.insertAdjacentHTML("beforeend", distTabla(seg, "edad") + distTabla(seg, "pais"));
+
+  const coche = bloque(grid, `<h2>¿Qué conduce?</h2>${leyenda(seg)}<h3>${esc(D.dims.clase)}</h3>`);
+  coche.appendChild(pareadas(distRows(seg, "clase"), seg));
+  coche.insertAdjacentHTML("beforeend", `<h3>${esc(D.dims.motor)}</h3>`);
+  coche.appendChild(pareadas(distRows(seg, "motor"), seg));
+  coche.insertAdjacentHTML("beforeend", distTabla(seg, "clase") + distTabla(seg, "motor"));
+
+  const rel = bloque(grid, `<h2>¿Qué relación tiene con Mercedes?</h2>${leyenda(seg)}<h3>${esc(D.dims.leasing)}</h3>`);
+  rel.appendChild(pareadas(distRows(seg, "leasing"), seg));
+  rel.insertAdjacentHTML("beforeend", `<h3>Antigüedad y taller</h3>`);
+  rel.appendChild(pareadas([
+    {label: "Antigüedad (meses)", seg: seg.kpis.antiguedad_meses, base: BASE.kpis.antiguedad_meses},
+  ], seg, x => fmtNum(x, 0) + " meses"));
+  rel.appendChild(pareadas([
+    {label: "Visitas al taller / coche", seg: seg.kpis.visitas_taller, base: BASE.kpis.visitas_taller},
+  ], seg, x => fmtNum(x, 1)));
+  rel.insertAdjacentHTML("beforeend", distTabla(seg, "leasing"));
+
+  const uso = bloque(grid, `<h2>¿Cómo usa el coche?</h2>${leyenda(seg)}
+    <p class="lead">Solo de los clientes con coche conectado: el ${pct(seg.uso.cobertura)} de este segmento (${pct(BASE.uso.cobertura)} del total). Medianas.</p>`);
+  uso.appendChild(pareadas([{label: "Horas de uso", seg: seg.uso.horas_mediana, base: BASE.uso.horas_mediana}], seg, x => fmtNum(x, 0) + " h"));
+  uso.appendChild(pareadas([{label: "Consumo (l/100 km)", seg: seg.uso.consumo_mediana, base: BASE.uso.consumo_mediana}], seg, x => fmtNum(x, 1)));
+  uso.insertAdjacentHTML("beforeend", `<p class="note">Los eléctricos no gastan combustible, así que su consumo no cuenta en la mediana.</p>` +
+    detalles("", ["Dato", seg.nombre, "Total"], [
+      ["Con coche conectado", pct(seg.uso.cobertura), pct(BASE.uso.cobertura)],
+      ["Horas de uso (mediana)", fmtNum(seg.uso.horas_mediana, 0), fmtNum(BASE.uso.horas_mediana, 0)],
+      ["Consumo l/100 km (mediana)", fmtNum(seg.uso.consumo_mediana, 1), fmtNum(BASE.uso.consumo_mediana, 1)]]));
+
+  const can = bloque(grid, `<h2>¿Por dónde le hablamos?</h2><p class="lead">Clientes que aceptan cada canal. La marca negra es el total.</p>`);
+  const canales = [["Email", "email"], ["Teléfono", "telefono"], ["Correo postal", "correo"]]
+    .map(([l, k]) => ({label: l, seg: seg.canales[k], base: BASE.canales[k]}));
+  can.appendChild(medidores(canales, seg));
+  can.insertAdjacentHTML("beforeend", `<p class="note">Es prácticamente igual en todos los segmentos: el canal se elige por el tipo de mensaje, no por el segmento.</p>` +
+    detalles("", ["Canal", seg.nombre, "Total"], canales.map(c => [c.label, pct(c.seg), pct(c.base)])));
+
+  const P = seg.plan;
+  bloque(grid, `<h2>¿Qué hacemos con ellos? · ${esc(seg.accion)}</h2><p class="lead">${esc(P.objetivo)}</p>
+    <div class="plan"><div><b>Oferta de vehículo</b>${esc(P.oferta)}</div><div><b>Mantenimiento</b>${esc(P.mantenimiento)}</div>
+    <div><b>Fidelización</b>${esc(P.fidelizacion)}</div><div><b>Comunicación</b>${esc(P.comunicacion)}</div>
+    <div><b>Qué medimos</b>${esc(P.medir)}</div></div>`, "full");
+}
+
+// ---------- navegación, tooltips y tema ----------
+function pintarNav(actual) {
+  const nav = document.getElementById("nav");
+  nav.innerHTML = `<button class="chip" data-go="general" type="button" aria-current="${actual === "general"}">Visión general</button>` +
+    SEGS.map(s => `<button class="chip" data-go="${s.slug}" type="button" aria-current="${actual === s.slug}">
+      <span class="dot" style="background:${segVar(s.color_idx)}"></span>${esc(s.nombre)} <span class="pct">${pct(s.pct)}</span></button>`).join("");
+}
+function ruta() {
+  const slug = decodeURIComponent(location.hash.slice(1)) || "general";
+  const seg = SEGS.find(s => s.slug === slug);
+  const actual = seg ? seg.slug : "general";
+  pintarNav(actual);
+  const main = document.getElementById("vista");
+  main.innerHTML = "";
+  if (seg) vistaSegmento(main, seg); else vistaGeneral(main);
+  document.title = (seg ? seg.nombre + " · " : "") + "Segmentos de clientes";
+  window.scrollTo({top: 0});
+}
+function ir(slug) { if (location.hash !== "#" + slug) location.hash = slug; else ruta(); }
+
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-go]");
+  if (t) ir(t.dataset.go);
+});
+document.addEventListener("keydown", e => {
+  const t = e.target.closest && e.target.closest("[data-go]");
+  if (e.key === "Enter" && t && t.tagName !== "BUTTON") { ir(t.dataset.go); return; }
+  if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+  if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+  const actual = ORDEN.indexOf(decodeURIComponent(location.hash.slice(1)) || "general");
+  const paso = e.key === "ArrowRight" ? 1 : -1;
+  ir(ORDEN[(Math.max(actual, 0) + paso + ORDEN.length) % ORDEN.length]);
+});
+
+const tip = document.getElementById("tip");
+function mostrarTip(el, x, y) {
+  tip.textContent = el.dataset.tip;
+  tip.style.display = "block";
+  const r = tip.getBoundingClientRect();
+  tip.style.left = Math.min(x + 14, window.innerWidth - r.width - 8) + "px";
+  tip.style.top = Math.min(y + 14, window.innerHeight - r.height - 8) + "px";
+}
+document.addEventListener("mousemove", e => {
+  const el = e.target.closest && e.target.closest("[data-tip]");
+  if (el) mostrarTip(el, e.clientX, e.clientY); else tip.style.display = "none";
+});
+document.addEventListener("focusin", e => {
+  const el = e.target.closest("[data-tip]") || e.target.querySelector && e.target.querySelector("[data-tip]");
+  if (el) { const r = e.target.getBoundingClientRect(); mostrarTip(el, r.left, r.bottom); }
+});
+document.addEventListener("focusout", () => { tip.style.display = "none"; });
+
+const TEMAS = ["auto", "light", "dark"], NOMBRE_TEMA = {auto: "automático", light: "claro", dark: "oscuro"};
+function aplicarTema(t) {
+  if (t === "auto") document.documentElement.removeAttribute("data-theme");
+  else document.documentElement.setAttribute("data-theme", t);
+  document.getElementById("tema").textContent = "Tema: " + NOMBRE_TEMA[t];
+  try { localStorage.setItem("tema-segmentos", t); } catch (err) { /* sin almacenamiento: no pasa nada */ }
+}
+let tema = "auto";
+try { tema = localStorage.getItem("tema-segmentos") || "auto"; } catch (err) { tema = "auto"; }
+aplicarTema(TEMAS.includes(tema) ? tema : "auto");
+document.getElementById("tema").addEventListener("click", () => {
+  const t = TEMAS[(TEMAS.indexOf(document.documentElement.getAttribute("data-theme") || "auto") + 1) % TEMAS.length];
+  aplicarTema(t);
+});
+
+document.getElementById("n-total").textContent = fmtNum(D.meta.n, 0);
+window.addEventListener("hashchange", ruta);
+ruta();
+
+</script>
+</body>
+</html>

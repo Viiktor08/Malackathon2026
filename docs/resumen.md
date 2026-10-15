@@ -34,3 +34,27 @@ Notebook: [`notebooks/01_eda_calidad.ipynb`](../notebooks/01_eda_calidad.ipynb).
 | Columnas que repiten lo mismo: `role_type` = `role == DRIVER`, vehículos conectados = nº de vehículos actuales, poder adquisitivo y población ×3 | Una sola por concepto |
 | `*_mode` con listas y valores en tramos; contadores con extremos de 1,45·10⁹ | Fuera |
 | Extremos poco creíbles (velocidad media > 150 km/h, consumo ≥ 40 l/100 km) | Recorte p1-p99 y log en colas largas |
+
+## Reto 4 · Interpretación de los segmentos
+
+Notebook: [`notebooks/04_interpretacion.ipynb`](../notebooks/04_interpretacion.ipynb). Dashboard: [`outputs/dashboard_segmentos.html`](../outputs/dashboard_segmentos.html) (se abre con doble clic, sin conexión). Las cifras del notebook y del dashboard salen del mismo código (`src/profiling.py`).
+
+Cada segmento se describe comparándolo con el total de clientes. Los segmentos los define la **relación con la marca y el ciclo de vida del coche**, no el modelo de coche.
+
+| Segmento | Clientes | Lo que le define (frente a la media) | Acción |
+|---|---|---|---|
+| Fieles de taller | 24,1 % (41.811) | 4,4 visitas al taller por coche (media 2,1) y 48 meses de antigüedad (media 34) | Fidelizar |
+| Recién llegados | 18,3 % (31.769) | 18 meses como clientes y coche de 2,5 años (media 4,6) | Vincular |
+| Coche veterano | 18,2 % (31.611) | Coche de 8,4 años; solo un 4,7 % con leasing (media 26,2 %) | Renovar |
+| Electrificados | 15,9 % (27.575) | Todos con eléctrico o enchufable (media 23,4 %), coche de 2,9 años | Acompañar |
+| Desconectados | 9,0 % (15.660) | Ningún coche activo; 11,7 % con leasing terminado (media 3,3 %) | Recuperar |
+| Multivehículo | 8,8 % (15.327) | 7,2 vehículos de media y 54 meses de antigüedad; aquí están 904 de las 908 cuentas grandes | Ampliar |
+| Zonas premium | 5,6 % (9.703) | Zona con 1,79× el poder adquisitivo típico de su país, casi todos en Suiza | Elevar |
+
+Cada segmento tiene en el notebook y en el dashboard su plan en las cuatro palancas del reto (oferta de vehículo, mantenimiento, fidelización y comunicación) y qué mediríamos.
+
+Avisos para usar los segmentos:
+
+- "Sin coche activo" es una señal de posible fuga, no la prueba de que el cliente se haya ido.
+- En un 12 % de los clientes la antigüedad (36 meses) es un valor por defecto; afecta sobre todo a Coche veterano.
+- Los consentimientos son casi iguales en todos los segmentos (email 98 %, teléfono 86 %, correo 85 %): el canal se elige por el mensaje, no por el segmento.
