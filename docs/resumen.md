@@ -43,9 +43,9 @@ Cada segmento se describe comparándolo con el total de clientes. Los segmentos 
 
 | Segmento | Clientes | Lo que le define (frente a la media) | Acción |
 |---|---|---|---|
-| Fieles de taller | 24,1 % (41.811) | 4,4 visitas al taller por coche (media 2,1) y 48 meses de antigüedad (media 34) | Fidelizar |
+| Coche en garantía | 24,1 % (41.811) | 4,4 visitas en garantía por coche (media 2,1), coche de 5,2 años y 48 meses de antigüedad (media 34) | Retener |
 | Recién llegados | 18,3 % (31.769) | 18 meses como clientes y coche de 2,5 años (media 4,6) | Vincular |
-| Coche veterano | 18,2 % (31.611) | Coche de 8,4 años; solo un 4,7 % con leasing (media 26,2 %) | Renovar |
+| Coche veterano | 18,2 % (31.611) | Coche de 8,4 años; solo un 4,7 % con leasing (media 26,2 %); más de la mitad sin ninguna visita en garantía | Renovar |
 | Electrificados | 15,9 % (27.575) | Todos con eléctrico o enchufable (media 23,4 %), coche de 2,9 años | Acompañar |
 | Desconectados | 9,0 % (15.660) | Ningún coche activo; 11,7 % con leasing terminado (media 3,3 %) | Recuperar |
 | Multivehículo | 8,8 % (15.327) | 7,2 vehículos de media y 54 meses de antigüedad; aquí están 904 de las 908 cuentas grandes | Ampliar |
@@ -56,5 +56,6 @@ Cada segmento tiene en el notebook y en el dashboard su plan en las cuatro palan
 Avisos para usar los segmentos:
 
 - "Sin coche activo" es una señal de posible fuga, no la prueba de que el cliente se haya ido.
+- Las visitas al taller del dataset son solo visitas **en garantía**: suben con la edad del coche hasta los 5-6 años y luego bajan. No miden fidelidad al taller, sino uso de la garantía.
 - En un 12 % de los clientes la antigüedad (36 meses) es un valor por defecto; afecta sobre todo a Coche veterano.
 - Los consentimientos son casi iguales en todos los segmentos (email 98 %, teléfono 86 %, correo 85 %): el canal se elige por el mensaje, no por el segmento.
