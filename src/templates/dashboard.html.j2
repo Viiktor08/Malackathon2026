@@ -4,12 +4,498 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Segmentos de clientes</title>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10);
+  --mid: #f0efec; --neg: #2a78d6; --pos: #e34948; --base: {{ payload.colores.base }};
+{% for c in payload.colores.claro %}  --seg-{{ loop.index0 }}: {{ c }};
+{% endfor %}}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+    --mid: #383835; --neg: #3987e5; --pos: #e66767;
+{% for c in payload.colores.oscuro %}    --seg-{{ loop.index0 }}: {{ c }};
+{% endfor %}  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+  --mid: #383835; --neg: #3987e5; --pos: #e66767;
+{% for c in payload.colores.oscuro %}  --seg-{{ loop.index0 }}: {{ c }};
+{% endfor %}}
+{% raw %}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink);
+       font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+header { position: sticky; top: 0; z-index: 5; background: var(--page); border-bottom: 1px solid var(--border);
+         padding: 14px 24px 12px; }
+.top { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+h1 { font-size: 20px; margin: 0; font-weight: 650; }
+.sub { color: var(--ink2); font-size: 14px; }
+.top .spacer { flex: 1; }
+nav { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.chip { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px;
+        border: 1px solid var(--border); background: var(--surface); color: var(--ink); font: inherit;
+        font-size: 14px; cursor: pointer; }
+.chip:hover { border-color: var(--muted); }
+.chip[aria-current="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); font-weight: 600; }
+.chip .pct { color: var(--ink2); font-weight: 400; }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex: none; display: inline-block; }
+.btn { font: inherit; font-size: 13px; color: var(--ink2); background: none; border: 1px solid var(--border);
+       border-radius: 8px; padding: 5px 10px; cursor: pointer; }
+.btn:hover { color: var(--ink); border-color: var(--muted); }
+main { max-width: 1440px; margin: 0 auto; padding: 20px 24px 48px; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.full { grid-column: 1 / -1; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+.card h2 { font-size: 16px; margin: 0 0 4px; font-weight: 650; }
+.card .lead { color: var(--ink2); font-size: 13.5px; margin: 0 0 12px; }
+.card h3 { font-size: 13px; color: var(--ink2); font-weight: 600; margin: 14px 0 4px; text-transform: none; }
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.tile { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+.tile .label { color: var(--ink2); font-size: 13px; }
+.tile .value { font-size: 26px; font-weight: 650; margin-top: 2px; }
+.tile .hero { font-size: 48px; font-weight: 650; line-height: 1.1; }
+.tile .delta { font-size: 13px; color: var(--ink2); margin-top: 2px; }
+.legend { display: flex; gap: 16px; font-size: 13px; color: var(--ink2); margin: 2px 0 6px; flex-wrap: wrap; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+svg { display: block; width: 100%; height: auto; overflow: visible; }
+svg text { font-family: inherit; }
+.t-label { fill: var(--ink); font-size: 13px; }
+.t-value { fill: var(--ink); font-size: 12.5px; font-weight: 600; }
+.t-muted { fill: var(--muted); font-size: 12px; }
+.hit { fill: transparent; cursor: default; }
+.go { cursor: pointer; }
+.go:hover .hover-bg, .go:focus .hover-bg { fill: var(--grid); }
+.hover-bg { fill: transparent; }
+details { margin-top: 10px; font-size: 13px; }
+summary { color: var(--ink2); cursor: pointer; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--grid); font-size: 13px; }
+td.num, th.num { text-align: right; }
+.heat { overflow-x: auto; }
+.heat table { font-variant-numeric: tabular-nums; }
+.heat th { font-weight: 600; color: var(--ink2); font-size: 12.5px; vertical-align: bottom; }
+.heat tbody th { color: var(--ink); white-space: nowrap; cursor: pointer; }
+.heat tbody tr:hover th { text-decoration: underline; }
+.heat td { text-align: center; font-size: 12.5px; padding: 8px 4px; border: 2px solid var(--surface); border-radius: 4px; }
+.scale { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--ink2); margin-top: 10px; }
+.scale .bar { height: 10px; width: 220px; border-radius: 3px;
+              background: linear-gradient(90deg, var(--neg), var(--mid), var(--pos)); }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.scard { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px;
+         border-top-width: 4px; cursor: pointer; text-align: left; font: inherit; color: inherit; }
+.scard:hover, .scard:focus { border-color: var(--muted); }
+.scard .name { font-weight: 650; font-size: 15px; }
+.scard .meta { color: var(--ink2); font-size: 13px; margin: 2px 0 8px; }
+.badge { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px;
+         border: 1px solid var(--border); color: var(--ink); }
+.scard .trait { font-size: 13.5px; margin-top: 8px; color: var(--ink); }
+.seghead { display: flex; gap: 16px; align-items: flex-start; }
+.seghead .bar { width: 6px; align-self: stretch; border-radius: 3px; }
+.seghead h2 { font-size: 26px; margin: 0; }
+.seghead .size { color: var(--ink2); margin: 2px 0 10px; }
+.seghead blockquote { margin: 0 0 12px; font-size: 16px; max-width: 900px; }
+.tags { display: flex; gap: 8px; flex-wrap: wrap; }
+.tag { font-size: 13px; padding: 4px 10px; border-radius: 999px; background: var(--page); border: 1px solid var(--border); }
+.seghead .nav2 { margin-left: auto; display: flex; gap: 8px; }
+.plan { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.plan div { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: var(--page); }
+.plan b { display: block; font-size: 13px; color: var(--ink2); margin-bottom: 4px; }
+.note { font-size: 13px; color: var(--ink2); margin-top: 10px; }
+#tip { position: fixed; z-index: 20; pointer-events: none; background: var(--surface); color: var(--ink);
+       border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px;
+       box-shadow: 0 4px 16px rgba(0,0,0,0.12); max-width: 300px; display: none; white-space: pre-line; }
+footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 0 24px 24px; }
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr; }
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .plan { grid-template-columns: 1fr; }
+  header, main { padding-left: 16px; padding-right: 16px; }
+}
+{% endraw %}
+</style>
 </head>
 <body>
-<h1>Segmentos de clientes</h1>
-<ul>
-{% for s in payload.segmentos %}  <li>{{ s.nombre }}</li>
-{% endfor %}</ul>
+<header>
+  <div class="top">
+    <h1>Segmentos de clientes</h1>
+    <span class="sub">Malackathon 2026 · reto Mercedes-Benz · <span id="n-total"></span> clientes · Suiza y Austria</span>
+    <span class="spacer"></span>
+    <button class="btn" id="tema" type="button">Tema: automático</button>
+  </div>
+  <nav id="nav" aria-label="Segmentos"></nav>
+</header>
+<main id="vista"></main>
+<footer>Solo datos agregados por segmento · Generado desde notebooks/04_interpretacion.ipynb · ← → para cambiar de segmento</footer>
+<div id="tip" role="tooltip"></div>
+<noscript><p style="padding:24px">Este dashboard necesita JavaScript. Segmentos:
+{% for s in payload.segmentos %}{{ s.nombre }}{% if not loop.last %}, {% endif %}{% endfor %}.</p></noscript>
 <script id="datos" type="application/json">{{ data_json }}</script>
+<script>
+{% raw %}
+"use strict";
+const D = JSON.parse(document.getElementById("datos").textContent);
+const SEGS = D.segmentos, BASE = D.base, KPIS = D.kpis;
+const NS = "http://www.w3.org/2000/svg";
+const ORDEN = ["general", ...SEGS.map(s => s.slug)];
+
+// ---------- utilidades ----------
+function fmtNum(x, d) {
+  if (x === null || x === undefined || Number.isNaN(x)) return "—";
+  const s = Math.abs(x).toFixed(d);
+  const [ent, dec] = s.split(".");
+  const signo = x < 0 && Number(s) !== 0 ? "-" : "";
+  return signo + ent.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + (dec ? "," + dec : "");
+}
+const pct = x => fmtNum(x, 1) + " %";
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+const segVar = i => `var(--seg-${i})`;
+const catLabel = c => D.categorias[c] || c;
+
+function svgEl(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) e.setAttribute(k, v);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function svgText(parent, x, y, txt, cls, anchor) {
+  const t = svgEl("text", {x, y, class: cls, "text-anchor": anchor || "start", "dominant-baseline": "middle"}, parent);
+  t.textContent = txt;
+  return t;
+}
+// Barra horizontal: extremo de datos redondeado, base recta
+function hbarPath(x0, y, w, h, r) {
+  const aw = Math.abs(w);
+  if (aw < 0.5) return "";
+  r = Math.min(r, aw, h / 2);
+  const xe = x0 + w, s = w >= 0 ? -1 : 1;
+  return `M${x0},${y} H${xe + s * r} Q${xe},${y} ${xe},${y + r} V${y + h - r} Q${xe},${y + h} ${xe + s * r},${y + h} H${x0} Z`;
+}
+function deltaTexto(key, seg, base) {
+  const spec = KPIS[key], d = seg - base;
+  if (spec.unit === "%") return (d >= 0 ? "+" : "") + fmtNum(d, 1) + " pp";
+  const u = spec.unit && spec.unit !== "×" ? " " + spec.unit : "";
+  return (d >= 0 ? "+" : "") + fmtNum(d, spec.decimals) + u;
+}
+function flecha(z) { return Math.abs(z) < 0.1 ? "≈" : (z > 0 ? "▲" : "▼"); }
+function detalles(titulo, cabecera, filas) {
+  const head = cabecera.map((h, i) => `<th class="${i ? "num" : ""}">${esc(h)}</th>`).join("");
+  const body = filas.map(f => "<tr>" + f.map((c, i) => `<td class="${i ? "num" : ""}">${esc(c)}</td>`).join("") + "</tr>").join("");
+  return `<details><summary>ver tabla${titulo ? " · " + esc(titulo) : ""}</summary><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></details>`;
+}
+function leyenda(seg) {
+  return `<div class="legend"><span><i class="sw" style="background:${segVar(seg.color_idx)}"></i>${esc(seg.nombre)}</span>` +
+         `<span><i class="sw" style="background:var(--base)"></i>Total de clientes</span></div>`;
+}
+
+// ---------- gráficos ----------
+// Barras sencillas (una serie, color por fila). rows: {label, value, color, valueLabel, tip, go}
+function barras(rows, opts) {
+  const W = 560, LW = opts.labelW || 170, RH = 32, BH = 18, VW = 70;
+  const max = opts.max || Math.max(...rows.map(r => r.value));
+  const svg = svgEl("svg", {viewBox: `0 0 ${W} ${rows.length * RH + 4}`, role: "img", "aria-label": opts.aria || ""});
+  rows.forEach((r, i) => {
+    const y = i * RH + 2, g = svgEl("g", r.go ? {class: "go", "data-go": r.go, tabindex: 0} : {}, svg);
+    svgEl("rect", {x: 0, y, width: W, height: RH, class: "hover-bg", rx: 6}, g);
+    if (r.dot) svgEl("circle", {cx: 6, cy: y + RH / 2, r: 5, fill: r.color}, g);
+    svgText(g, r.dot ? 18 : 0, y + RH / 2, r.label, "t-label");
+    const w = (W - LW - VW) * r.value / max;
+    svgEl("path", {d: hbarPath(LW, y + (RH - BH) / 2, w, BH, 4), fill: r.color}, g);
+    svgText(g, LW + w + 6, y + RH / 2, r.valueLabel, "t-value");
+    const hit = svgEl("rect", {x: 0, y, width: W, height: RH, class: "hit"}, g);
+    hit.dataset.tip = r.tip;
+  });
+  return svg;
+}
+
+// Segmento frente a total por categoría. rows: {label, seg, base}; valores en %
+function pareadas(rows, seg, fmt) {
+  fmt = fmt || pct;
+  const W = 600, LW = 200, RH = 34, BH = 11, VW = 64;
+  const max = Math.max(1, ...rows.map(r => Math.max(r.seg ?? 0, r.base ?? 0)));
+  const svg = svgEl("svg", {viewBox: `0 0 ${W} ${rows.length * RH + 4}`, role: "img",
+                            "aria-label": `${seg.nombre} frente al total`});
+  svgEl("line", {x1: LW, x2: LW, y1: 0, y2: rows.length * RH + 4, stroke: "var(--axis)", "stroke-width": 1}, svg);
+  rows.forEach((r, i) => {
+    const y = i * RH + 2, g = svgEl("g", {}, svg);
+    svgText(g, 0, y + RH / 2, r.label, "t-label");
+    const ws = (W - LW - VW) * (r.seg ?? 0) / max, wb = (W - LW - VW) * (r.base ?? 0) / max;
+    svgEl("path", {d: hbarPath(LW, y + RH / 2 - BH - 1, ws, BH, 4), fill: segVar(seg.color_idx)}, g);
+    svgEl("path", {d: hbarPath(LW, y + RH / 2 + 1, wb, BH, 4), fill: "var(--base)"}, g);
+    svgText(g, LW + Math.max(ws, wb) + 6, y + RH / 2, fmt(r.seg), "t-value");
+    const hit = svgEl("rect", {x: 0, y, width: W, height: RH, class: "hit"}, g);
+    hit.dataset.tip = `${r.label}\n${seg.nombre}: ${fmt(r.seg)}\nTotal: ${fmt(r.base)}`;
+  });
+  return svg;
+}
+
+// Diferencia con la media (z), ordenada de más a menos distinta
+function divergentes(seg) {
+  const keys = Object.keys(KPIS).sort((a, b) => Math.abs(seg.z[b]) - Math.abs(seg.z[a]));
+  const W = 640, LW = 250, RH = 28, BH = 14;
+  const lim = Math.min(3.2, Math.max(1.5, ...keys.map(k => Math.abs(seg.z[k]))));
+  const PW = W - LW - 20, cx = LW + PW / 2, esc_ = (PW / 2 - 60) / lim;
+  const H = keys.length * RH + 24;
+  const svg = svgEl("svg", {viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": `${seg.nombre}: diferencia con la media`});
+  svgText(svg, cx - 8, 8, "◄ por debajo de la media", "t-muted", "end");
+  svgText(svg, cx + 8, 8, "por encima ►", "t-muted", "start");
+  svgEl("line", {x1: cx, x2: cx, y1: 18, y2: H, stroke: "var(--axis)", "stroke-width": 1}, svg);
+  keys.forEach((k, i) => {
+    const z = seg.z[k], y = 20 + i * RH, g = svgEl("g", {}, svg);
+    const fuerte = Math.abs(z) >= 0.5;
+    svgText(g, 0, y + RH / 2, KPIS[k].label, "t-label");
+    const w = Math.max(-lim, Math.min(lim, z)) * esc_;
+    svgEl("path", {d: hbarPath(cx, y + (RH - BH) / 2, w, BH, 4), fill: fuerte ? segVar(seg.color_idx) : "var(--base)"}, g);
+    const tx = cx + w + (w >= 0 ? 6 : -6);
+    svgText(g, tx, y + RH / 2, seg.kpis_fmt[k], fuerte ? "t-value" : "t-muted", w >= 0 ? "start" : "end");
+    const hit = svgEl("rect", {x: 0, y, width: W, height: RH, class: "hit"}, g);
+    hit.dataset.tip = `${KPIS[k].label}\n${seg.nombre}: ${seg.kpis_fmt[k]}\nMedia: ${BASE.kpis_fmt[k]}\n` +
+                      `${flecha(z)} ${fmtNum(Math.abs(z), 2)} desviaciones ${z >= 0 ? "por encima" : "por debajo"}`;
+  });
+  return svg;
+}
+
+// Medidores de 0 a 100 % con una marca para el total
+function medidores(rows, seg) {
+  const W = 560, LW = 150, RH = 34, BH = 12, VW = 64;
+  const svg = svgEl("svg", {viewBox: `0 0 ${W} ${rows.length * RH + 4}`, role: "img", "aria-label": "Canales de contacto"});
+  rows.forEach((r, i) => {
+    const y = i * RH + 2, g = svgEl("g", {}, svg), PW = W - LW - VW;
+    svgText(g, 0, y + RH / 2, r.label, "t-label");
+    svgEl("rect", {x: LW, y: y + (RH - BH) / 2, width: PW, height: BH, rx: 4, fill: "var(--grid)"}, g);
+    svgEl("path", {d: hbarPath(LW, y + (RH - BH) / 2, PW * r.seg / 100, BH, 4), fill: segVar(seg.color_idx)}, g);
+    const xb = LW + PW * r.base / 100;
+    svgEl("line", {x1: xb, x2: xb, y1: y + 6, y2: y + RH - 6, stroke: "var(--ink)", "stroke-width": 2}, g);
+    svgText(g, LW + PW + 8, y + RH / 2, pct(r.seg), "t-value");
+    const hit = svgEl("rect", {x: 0, y, width: W, height: RH, class: "hit"}, g);
+    hit.dataset.tip = `${r.label}\n${seg.nombre}: ${pct(r.seg)}\nTotal: ${pct(r.base)} (la marca negra)`;
+  });
+  return svg;
+}
+
+function bloque(contenedor, html, cls) {
+  const div = document.createElement("section");
+  div.className = "card " + (cls || "");
+  div.innerHTML = html;
+  contenedor.appendChild(div);
+  return div;
+}
+function distRows(seg, dim) {
+  return Object.keys(BASE.dist[dim]).map(c => ({label: catLabel(c), seg: seg.dist[dim][c], base: BASE.dist[dim][c]}));
+}
+function distTabla(seg, dim) {
+  return detalles(D.dims[dim], ["Categoría", seg.nombre, "Total"],
+                  distRows(seg, dim).map(r => [r.label, pct(r.seg), pct(r.base)]));
+}
+
+// ---------- vista general ----------
+function vistaGeneral(main) {
+  const tiles = document.createElement("div");
+  tiles.className = "tiles full";
+  tiles.innerHTML = [
+    `<div class="tile"><div class="label">Clientes</div><div class="hero">${fmtNum(D.meta.n, 0)}</div></div>`,
+    `<div class="tile"><div class="label">Segmentos</div><div class="value">${D.meta.k}</div><div class="delta">definidos con K-Means</div></div>`,
+    `<div class="tile"><div class="label">${esc(KPIS.pct_electrificado.label)}</div><div class="value">${esc(BASE.kpis_fmt.pct_electrificado)}</div><div class="delta">de todos los clientes</div></div>`,
+    `<div class="tile"><div class="label">${esc(KPIS.pct_sin_activo.label)}</div><div class="value">${esc(BASE.kpis_fmt.pct_sin_activo)}</div><div class="delta">de todos los clientes</div></div>`,
+  ].join("");
+  const grid = document.createElement("div");
+  grid.className = "grid";
+  main.appendChild(grid);
+  grid.appendChild(tiles);
+
+  const tam = bloque(grid, `<h2>¿Cuánto pesa cada segmento?</h2><p class="lead">Porcentaje de clientes. Pulsa uno para ver su ficha.</p>`);
+  tam.appendChild(barras(SEGS.map(s => ({
+    label: s.nombre, value: s.pct, color: segVar(s.color_idx), dot: true, go: s.slug,
+    valueLabel: pct(s.pct), tip: `${s.nombre}\n${fmtNum(s.n, 0)} clientes (${pct(s.pct)})\nAcción: ${s.accion}`,
+  })), {aria: "Tamaño de cada segmento"}));
+  tam.insertAdjacentHTML("beforeend", detalles("", ["Segmento", "Clientes", "%"], SEGS.map(s => [s.nombre, fmtNum(s.n, 0), pct(s.pct)])));
+
+  bloque(grid, `<h2>Cómo leer este dashboard</h2>
+    <p class="lead">Cada segmento se compara siempre con el total de clientes: el segmento va en su color y el total en gris.</p>
+    <p class="note">· Los segmentos los definen la relación con la marca y el ciclo de vida del coche (antigüedad, edad del coche, actividad, electrificación), no el modelo de coche.</p>
+    <p class="note">· "Sin coche activo" es una señal de posible fuga, no la prueba de que el cliente se haya ido.</p>
+    <p class="note">· En un 12 % de los clientes la antigüedad es un valor por defecto, no su antigüedad real.</p>
+    <p class="note">· Los canales de contacto son casi iguales en todos los segmentos: el email llega a prácticamente todos.</p>`);
+
+  const keys = Object.keys(KPIS);
+  const filas = SEGS.map(s => {
+    const celdas = keys.map(k => {
+      const z = s.z[k], t = Math.min(Math.abs(z) / 2, 1), polo = z >= 0 ? "--pos" : "--neg";
+      const fondo = `color-mix(in oklab, var(${polo}) ${Math.round(t * 100)}%, var(--mid))`;
+      const tinta = t > 0.6 ? "#ffffff" : "var(--ink)";
+      const tip = `${s.nombre} · ${KPIS[k].label}\n${s.kpis_fmt[k]} (media: ${BASE.kpis_fmt[k]})`;
+      return `<td style="background:${fondo};color:${tinta}" data-tip="${esc(tip)}">${esc(s.kpis_fmt[k])}</td>`;
+    }).join("");
+    return `<tr data-go="${s.slug}" tabindex="0"><th><span class="dot" style="background:${segVar(s.color_idx)}"></span> ${esc(s.nombre)}</th>${celdas}</tr>`;
+  }).join("");
+  const media = `<tr><th>Total de clientes</th>${keys.map(k => `<td>${esc(BASE.kpis_fmt[k])}</td>`).join("")}</tr>`;
+  bloque(grid, `<h2>¿Qué distingue a cada segmento?</h2>
+    <p class="lead">Rojo: por encima de la media; azul: por debajo. Cuanto más intenso, más se separa del total. En cada casilla, el valor real del segmento. Pulsa una fila para abrir su ficha.</p>
+    <div class="heat"><table><thead><tr><th></th>${keys.map(k => `<th>${esc(KPIS[k].short)}</th>`).join("")}</tr></thead>
+    <tbody>${filas}${media}</tbody></table></div>
+    <div class="scale"><span>por debajo</span><span class="bar"></span><span>por encima de la media</span></div>`, "full");
+
+  const cards = SEGS.map(s => `<button class="scard" data-go="${s.slug}" style="border-top-color:${segVar(s.color_idx)}">
+      <div class="name">${esc(s.nombre)}</div><div class="meta">${pct(s.pct)} · ${fmtNum(s.n, 0)} clientes</div>
+      <span class="badge">${esc(s.accion)}</span><div class="trait">${esc(s.etiquetas[0])}</div></button>`).join("");
+  bloque(grid, `<h2>Los siete segmentos en una línea</h2><p class="lead">Su rasgo más claro y lo que haríamos con ellos.</p><div class="cards">${cards}</div>`, "full");
+}
+
+// ---------- ficha de segmento ----------
+function vistaSegmento(main, seg) {
+  const grid = document.createElement("div");
+  grid.className = "grid";
+  main.appendChild(grid);
+  const prev = ORDEN[(ORDEN.indexOf(seg.slug) - 1 + ORDEN.length) % ORDEN.length];
+  const next = ORDEN[(ORDEN.indexOf(seg.slug) + 1) % ORDEN.length];
+
+  bloque(grid, `<div class="seghead"><span class="bar" style="background:${segVar(seg.color_idx)}"></span><div>
+      <h2>${esc(seg.nombre)}</h2>
+      <div class="size">${fmtNum(seg.n, 0)} clientes · ${pct(seg.pct)} del total · <span class="badge">${esc(seg.accion)}</span></div>
+      <blockquote>${esc(seg.frase)}</blockquote>
+      <div class="tags">${seg.etiquetas.map(e => `<span class="tag">${esc(e)}</span>`).join("")}</div></div>
+      <div class="nav2"><button class="btn" data-go="${prev}" type="button">← anterior</button>
+      <button class="btn" data-go="${next}" type="button">siguiente →</button></div></div>`, "full");
+
+  const claves = ["antiguedad_meses", "edad_coche", "n_vehiculos", "vehiculos_activos", "visitas_taller",
+                  "pct_electrificado", "riqueza_relativa", "pct_leasing_activo"];
+  const tiles = document.createElement("div");
+  tiles.className = "tiles full";
+  tiles.innerHTML = claves.map(k => `<div class="tile" data-tip="${esc(KPIS[k].label + "\n" + seg.nombre + ": " + seg.kpis_fmt[k] + "\nMedia: " + BASE.kpis_fmt[k])}">
+      <div class="label">${esc(KPIS[k].label)}</div><div class="value">${esc(seg.kpis_fmt[k])}</div>
+      <div class="delta">${flecha(seg.z[k])} ${esc(deltaTexto(k, seg.kpis[k], BASE.kpis[k]))} · media ${esc(BASE.kpis_fmt[k])}</div></div>`).join("");
+  grid.appendChild(tiles);
+
+  const dif = bloque(grid, `<h2>¿En qué se diferencia?</h2><p class="lead">Distancia a la media de todos los clientes, de más a menos distinta. En color, las diferencias claras.</p>`);
+  dif.appendChild(divergentes(seg));
+  dif.insertAdjacentHTML("beforeend", detalles("", ["Indicador", seg.nombre, "Media", "Diferencia (desv.)"],
+    Object.keys(KPIS).map(k => [KPIS[k].label, seg.kpis_fmt[k], BASE.kpis_fmt[k], fmtNum(seg.z[k], 2)])));
+
+  const quien = bloque(grid, `<h2>¿Quién es por dentro?</h2>${leyenda(seg)}<h3>${esc(D.dims.edad)}</h3>`);
+  quien.appendChild(pareadas(distRows(seg, "edad"), seg));
+  quien.insertAdjacentHTML("beforeend", `<h3>${esc(D.dims.pais)}</h3>`);
+  quien.appendChild(pareadas(distRows(seg, "pais"), seg));
+  quien.insertAdjacentHTML("beforeend", distTabla(seg, "edad") + distTabla(seg, "pais"));
+
+  const coche = bloque(grid, `<h2>¿Qué conduce?</h2>${leyenda(seg)}<h3>${esc(D.dims.clase)}</h3>`);
+  coche.appendChild(pareadas(distRows(seg, "clase"), seg));
+  coche.insertAdjacentHTML("beforeend", `<h3>${esc(D.dims.motor)}</h3>`);
+  coche.appendChild(pareadas(distRows(seg, "motor"), seg));
+  coche.insertAdjacentHTML("beforeend", distTabla(seg, "clase") + distTabla(seg, "motor"));
+
+  const rel = bloque(grid, `<h2>¿Qué relación tiene con Mercedes?</h2>${leyenda(seg)}<h3>${esc(D.dims.leasing)}</h3>`);
+  rel.appendChild(pareadas(distRows(seg, "leasing"), seg));
+  rel.insertAdjacentHTML("beforeend", `<h3>Antigüedad y taller</h3>`);
+  rel.appendChild(pareadas([
+    {label: "Antigüedad (meses)", seg: seg.kpis.antiguedad_meses, base: BASE.kpis.antiguedad_meses},
+  ], seg, x => fmtNum(x, 0) + " meses"));
+  rel.appendChild(pareadas([
+    {label: "Visitas al taller / coche", seg: seg.kpis.visitas_taller, base: BASE.kpis.visitas_taller},
+  ], seg, x => fmtNum(x, 1)));
+  rel.insertAdjacentHTML("beforeend", distTabla(seg, "leasing"));
+
+  const uso = bloque(grid, `<h2>¿Cómo usa el coche?</h2>${leyenda(seg)}
+    <p class="lead">Solo de los clientes con coche conectado: el ${pct(seg.uso.cobertura)} de este segmento (${pct(BASE.uso.cobertura)} del total). Medianas.</p>`);
+  uso.appendChild(pareadas([{label: "Horas de uso", seg: seg.uso.horas_mediana, base: BASE.uso.horas_mediana}], seg, x => fmtNum(x, 0) + " h"));
+  uso.appendChild(pareadas([{label: "Consumo (l/100 km)", seg: seg.uso.consumo_mediana, base: BASE.uso.consumo_mediana}], seg, x => fmtNum(x, 1)));
+  uso.insertAdjacentHTML("beforeend", `<p class="note">Los eléctricos no gastan combustible, así que su consumo no cuenta en la mediana.</p>` +
+    detalles("", ["Dato", seg.nombre, "Total"], [
+      ["Con coche conectado", pct(seg.uso.cobertura), pct(BASE.uso.cobertura)],
+      ["Horas de uso (mediana)", fmtNum(seg.uso.horas_mediana, 0), fmtNum(BASE.uso.horas_mediana, 0)],
+      ["Consumo l/100 km (mediana)", fmtNum(seg.uso.consumo_mediana, 1), fmtNum(BASE.uso.consumo_mediana, 1)]]));
+
+  const can = bloque(grid, `<h2>¿Por dónde le hablamos?</h2><p class="lead">Clientes que aceptan cada canal. La marca negra es el total.</p>`);
+  const canales = [["Email", "email"], ["Teléfono", "telefono"], ["Correo postal", "correo"]]
+    .map(([l, k]) => ({label: l, seg: seg.canales[k], base: BASE.canales[k]}));
+  can.appendChild(medidores(canales, seg));
+  can.insertAdjacentHTML("beforeend", `<p class="note">Es prácticamente igual en todos los segmentos: el canal se elige por el tipo de mensaje, no por el segmento.</p>` +
+    detalles("", ["Canal", seg.nombre, "Total"], canales.map(c => [c.label, pct(c.seg), pct(c.base)])));
+
+  const P = seg.plan;
+  bloque(grid, `<h2>¿Qué hacemos con ellos? · ${esc(seg.accion)}</h2><p class="lead">${esc(P.objetivo)}</p>
+    <div class="plan"><div><b>Oferta de vehículo</b>${esc(P.oferta)}</div><div><b>Mantenimiento</b>${esc(P.mantenimiento)}</div>
+    <div><b>Fidelización</b>${esc(P.fidelizacion)}</div><div><b>Comunicación</b>${esc(P.comunicacion)}</div>
+    <div><b>Qué medimos</b>${esc(P.medir)}</div></div>`, "full");
+}
+
+// ---------- navegación, tooltips y tema ----------
+function pintarNav(actual) {
+  const nav = document.getElementById("nav");
+  nav.innerHTML = `<button class="chip" data-go="general" type="button" aria-current="${actual === "general"}">Visión general</button>` +
+    SEGS.map(s => `<button class="chip" data-go="${s.slug}" type="button" aria-current="${actual === s.slug}">
+      <span class="dot" style="background:${segVar(s.color_idx)}"></span>${esc(s.nombre)} <span class="pct">${pct(s.pct)}</span></button>`).join("");
+}
+function ruta() {
+  const slug = decodeURIComponent(location.hash.slice(1)) || "general";
+  const seg = SEGS.find(s => s.slug === slug);
+  const actual = seg ? seg.slug : "general";
+  pintarNav(actual);
+  const main = document.getElementById("vista");
+  main.innerHTML = "";
+  if (seg) vistaSegmento(main, seg); else vistaGeneral(main);
+  document.title = (seg ? seg.nombre + " · " : "") + "Segmentos de clientes";
+  window.scrollTo({top: 0});
+}
+function ir(slug) { if (location.hash !== "#" + slug) location.hash = slug; else ruta(); }
+
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-go]");
+  if (t) ir(t.dataset.go);
+});
+document.addEventListener("keydown", e => {
+  const t = e.target.closest && e.target.closest("[data-go]");
+  if (e.key === "Enter" && t && t.tagName !== "BUTTON") { ir(t.dataset.go); return; }
+  if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+  if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+  const actual = ORDEN.indexOf(decodeURIComponent(location.hash.slice(1)) || "general");
+  const paso = e.key === "ArrowRight" ? 1 : -1;
+  ir(ORDEN[(Math.max(actual, 0) + paso + ORDEN.length) % ORDEN.length]);
+});
+
+const tip = document.getElementById("tip");
+function mostrarTip(el, x, y) {
+  tip.textContent = el.dataset.tip;
+  tip.style.display = "block";
+  const r = tip.getBoundingClientRect();
+  tip.style.left = Math.min(x + 14, window.innerWidth - r.width - 8) + "px";
+  tip.style.top = Math.min(y + 14, window.innerHeight - r.height - 8) + "px";
+}
+document.addEventListener("mousemove", e => {
+  const el = e.target.closest && e.target.closest("[data-tip]");
+  if (el) mostrarTip(el, e.clientX, e.clientY); else tip.style.display = "none";
+});
+document.addEventListener("focusin", e => {
+  const el = e.target.closest("[data-tip]") || e.target.querySelector && e.target.querySelector("[data-tip]");
+  if (el) { const r = e.target.getBoundingClientRect(); mostrarTip(el, r.left, r.bottom); }
+});
+document.addEventListener("focusout", () => { tip.style.display = "none"; });
+
+const TEMAS = ["auto", "light", "dark"], NOMBRE_TEMA = {auto: "automático", light: "claro", dark: "oscuro"};
+function aplicarTema(t) {
+  if (t === "auto") document.documentElement.removeAttribute("data-theme");
+  else document.documentElement.setAttribute("data-theme", t);
+  document.getElementById("tema").textContent = "Tema: " + NOMBRE_TEMA[t];
+  try { localStorage.setItem("tema-segmentos", t); } catch (err) { /* sin almacenamiento: no pasa nada */ }
+}
+let tema = "auto";
+try { tema = localStorage.getItem("tema-segmentos") || "auto"; } catch (err) { tema = "auto"; }
+aplicarTema(TEMAS.includes(tema) ? tema : "auto");
+document.getElementById("tema").addEventListener("click", () => {
+  const t = TEMAS[(TEMAS.indexOf(document.documentElement.getAttribute("data-theme") || "auto") + 1) % TEMAS.length];
+  aplicarTema(t);
+});
+
+document.getElementById("n-total").textContent = fmtNum(D.meta.n, 0);
+window.addEventListener("hashchange", ruta);
+ruta();
+{% endraw %}
+</script>
 </body>
 </html>

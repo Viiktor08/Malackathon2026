@@ -10,7 +10,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import Markup
 
 from src import config
-from src.profiling import DIMS, KPIS, build_profile, check_profile
+from src.profiling import DIMS, KPIS, build_profile, check_profile, fmt_kpi
 from src.segmentos import SEGMENTOS, check_segmentos, fill_texts
 
 MAX_JSON_KB = 200
@@ -41,13 +41,18 @@ def _sin_nan(x):
     return x
 
 
+def _con_formato(stats):
+    """Añade los indicadores ya formateados con el mismo código que usa el notebook."""
+    return {**stats, "kpis_fmt": {k: fmt_kpi(k, v) for k, v in stats["kpis"].items()}}
+
+
 def build_payload(profile, segmentos):
     """Perfil + textos rellenados + todo lo que la plantilla necesita para dibujar."""
     check_segmentos(segmentos, profile["meta"]["k"])
     segs = []
     for stats in profile["segmentos"]:
         textos = fill_texts(segmentos[stats["id"]], stats)
-        segs.append({**stats, **{k: textos[k] for k in _TEXT_KEYS}, "color_idx": stats["id"]})
+        segs.append({**_con_formato(stats), **{k: textos[k] for k in _TEXT_KEYS}, "color_idx": stats["id"]})
     return _sin_nan({
         "meta": profile["meta"],
         "kpis": KPIS,
@@ -55,7 +60,7 @@ def build_payload(profile, segmentos):
         "categorias": CAT_LABELS,
         "colores": {"claro": config.SEGMENT_COLORS, "oscuro": config.SEGMENT_COLORS_DARK,
                     "base": config.BASE_GRAY},
-        "base": profile["base"],
+        "base": _con_formato(profile["base"]),
         "segmentos": segs,
     })
 

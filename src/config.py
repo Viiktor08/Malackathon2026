@@ -31,4 +31,4 @@ AGE_ORDER = ["<25", "25-34", "35-44", "45-54", "55-64", "65+"]
 # Paleta categórica validada (slots 1-7) para fondo claro y oscuro; el total va en gris.
 SEGMENT_COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6"]
 SEGMENT_COLORS_DARK = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#9085e9"]
-BASE_GRAY = "#a3a29c"
+BASE_GRAY = "#898781"

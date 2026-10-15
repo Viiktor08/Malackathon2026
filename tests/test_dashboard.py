@@ -55,3 +55,11 @@ def test_write_dashboard_escribe_fichero(clientes, etiquetas, segmentos_prueba, 
     ruta = dashboard.write_dashboard(clientes, etiquetas, tmp_path / "d.html", segmentos=segmentos_prueba)
     assert ruta.exists()
     assert ruta.read_text(encoding="utf-8").lower().startswith("<!doctype html>")
+
+
+def test_payload_lleva_kpis_formateados(perfil, segmentos_prueba):
+    payload = dashboard.build_payload(perfil, segmentos_prueba)
+    for stats in [payload["base"], *payload["segmentos"]]:
+        for clave, valor in stats["kpis"].items():
+            assert stats["kpis_fmt"][clave] == profiling.fmt_kpi(clave, valor)
+    assert all("short" in spec for spec in payload["kpis"].values())

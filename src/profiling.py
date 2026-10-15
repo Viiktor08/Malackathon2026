@@ -9,17 +9,17 @@ from src import config
 
 # Indicadores que enseñamos por segmento: etiqueta, unidad y decimales al mostrarlos
 KPIS = {
-    "antiguedad_meses": {"label": "Antigüedad como cliente", "unit": "meses", "decimals": 0},
-    "edad_coche": {"label": "Edad del coche principal", "unit": "años", "decimals": 1},
-    "n_vehiculos": {"label": "Vehículos que ha tenido", "unit": "", "decimals": 1},
-    "vehiculos_activos": {"label": "Vehículos activos", "unit": "", "decimals": 1},
-    "visitas_taller": {"label": "Visitas al taller por coche", "unit": "", "decimals": 1},
-    "riqueza_relativa": {"label": "Poder adquisitivo frente a su país", "unit": "×", "decimals": 2},
-    "pct_electrificado": {"label": "Con eléctrico o enchufable", "unit": "%", "decimals": 1},
-    "pct_telemetria": {"label": "Con coche conectado", "unit": "%", "decimals": 1},
-    "pct_sin_activo": {"label": "Sin ningún coche activo", "unit": "%", "decimals": 1},
-    "pct_leasing_activo": {"label": "Con leasing activo", "unit": "%", "decimals": 1},
-    "pct_leasing_terminado": {"label": "Con leasing terminado", "unit": "%", "decimals": 1},
+    "antiguedad_meses": {"short": "Antigüedad", "label": "Antigüedad como cliente", "unit": "meses", "decimals": 0},
+    "edad_coche": {"short": "Edad coche", "label": "Edad del coche principal", "unit": "años", "decimals": 1},
+    "n_vehiculos": {"short": "Vehículos", "label": "Vehículos que ha tenido", "unit": "", "decimals": 1},
+    "vehiculos_activos": {"short": "Activos", "label": "Vehículos activos", "unit": "", "decimals": 1},
+    "visitas_taller": {"short": "Taller", "label": "Visitas al taller por coche", "unit": "", "decimals": 1},
+    "riqueza_relativa": {"short": "Riqueza rel.", "label": "Poder adquisitivo frente a su país", "unit": "×", "decimals": 2},
+    "pct_electrificado": {"short": "Electrificado", "label": "Con eléctrico o enchufable", "unit": "%", "decimals": 1},
+    "pct_telemetria": {"short": "Conectado", "label": "Con coche conectado", "unit": "%", "decimals": 1},
+    "pct_sin_activo": {"short": "Sin coche activo", "label": "Sin ningún coche activo", "unit": "%", "decimals": 1},
+    "pct_leasing_activo": {"short": "Leasing activo", "label": "Con leasing activo", "unit": "%", "decimals": 1},
+    "pct_leasing_terminado": {"short": "Leasing terminado", "label": "Con leasing terminado", "unit": "%", "decimals": 1},
 }
 
 # Columnas de la tabla de clientes que van tal cual como indicador
