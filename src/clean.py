@@ -122,6 +122,8 @@ def client_attributes(df):
         "consent_post_communication_channel": "consent_post",
         "purchasing_power_per_inhabitant_eur": "ppi",
     })
+    # Población 0 no es real (códigos postales sin residentes en la tabla socioeconómica): nulo
+    out["population"] = out["population"].replace(0, np.nan)
     out["age_ord"] = out["age_range"].map({a: i for i, a in enumerate(config.AGE_ORDER)})
     out["is_ch"] = (out["country_code"] == "CH").astype(int)
     # role_type cambia entre vehículos en ~1 % de clientes: es B2B si lo es en alguno

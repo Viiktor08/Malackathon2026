@@ -1,38 +1,36 @@
 # Resumen · Malackathon 2026 · Mercedes-Benz "Clustering the Star"
 
-## B1 · Hallazgos del EDA
+## Reto 1 · Exploración y calidad de datos
 
-Notebook: [`notebooks/01_eda_calidad.ipynb`](../notebooks/01_eda_calidad.ipynb). Cada cifra de esta sección está verificada en el notebook con un `assert` o una tabla. Las cifras son a nivel cliente (173.456 clientes) salvo que se indique lo contrario.
+Notebook: [`notebooks/01_eda_calidad.ipynb`](../notebooks/01_eda_calidad.ipynb). Las cifras son por cliente (173.456 clientes) y salen de la misma tabla de clientes que usamos en el reto 2.
 
-### ¿Cuáles son las principales características de los clientes?
+### ¿Cómo son los clientes?
 
-| Dimensión | Dato | Lectura para marketing |
+| Tema | Lo que vemos | Qué significa para marketing |
 |---|---|---|
-| Mercado | 66 % Suiza, 34 % Austria. Poder adquisitivo mediano por habitante: 51k € (CH) frente a 30k € (AT) | Dos mercados con niveles económicos muy distintos. Ofertas, precios y gama se calibran por país |
-| Edad | 61 % tiene 45+ años y el 20 % tiene 65+. Solo un 4,7 % tiene menos de 25 | Prioridad: fidelizar al cliente sénior. El cliente joven es un nicho de captación (gama compacta, renting) |
-| Género (inferido) | 65 % hombres, 18 % mujeres, 17 % desconocido | Solo para describir, no para dirigir campañas (D4) |
-| Vehículos | 73 % tiene un solo coche en su histórico. 908 cuentas (0,5 %) con ≥20 vehículos acumulan el 16 % de las filas | La palanca principal es el ciclo de recompra. Las flotas van por otro canal |
-| Gama | Dominan los SUV (GLC, GLA/GLB, GLE/GLS) y C/A-Class. Hay un bloque relevante de comerciales (Vito/V-Class, Sprinter, Citan) | Particular SUV frente a profesional de furgoneta: mensajes distintos |
-| Electrificación | 21 % tiene algún eléctrico o PHEV. Crece con la edad (11,5 % en <25, 25 % en 55-64). AT 29 % frente a CH 17 % | El early adopter de EQ es maduro y de alto valor. Suiza tiene recorrido para campañas de transición |
-| Financiación | 26 % con leasing activo (pico en 35-44 años); 3,3 % con leasing ya terminado | Los leasing terminados son una ventana de renovación. Los mayores de 65 compran casi siempre al contado |
-| Actividad | 10,4 % sin ningún vehículo activo | Riesgo de fuga, objetivo de reconquista |
-| Taller | 29 % sin visitas en garantía | Objetivo para planes de mantenimiento y recordatorios de servicio |
-| Conectividad | 52 % con telemática | Mantenimiento predictivo según uso real, solo en esa mitad |
-| Consentimientos | Email 98 %, teléfono 86 %, correo postal 85 % | El email es el canal universal; el canal no discrimina entre segmentos |
+| Mercado | 66 % Suiza y 34 % Austria. Poder adquisitivo mediano por habitante: 51.000 € en Suiza y 30.000 € en Austria | Dos mercados con niveles muy distintos; ofertas y precios hay que pensarlos por país |
+| Edad | El 61 % tiene 45 años o más y el 20 % más de 65. Menores de 25, solo un 5 % | Lo prioritario es fidelizar al cliente sénior; el joven es un nicho para captar |
+| Género (inferido) | 65 % hombres, 18 % mujeres y un 17 % que no sabemos | Solo para describir, no para dirigir campañas |
+| Vehículos | El 73 % solo ha tenido un coche. 908 cuentas (0,5 %) tienen 20 o más y acumulan el 16 % de las filas | La palanca principal es la recompra; las flotas van por otro canal |
+| Gama | Mandan los SUV (GLC, GLA/GLB, GLE/GLS) y los C y A. Hay un bloque importante de furgonetas (Vito/V-Class, Sprinter, Citan) | Particular con SUV y profesional con furgoneta piden mensajes distintos |
+| Electrificación | El 23 % tiene algún eléctrico o enchufable. Crece con la edad (del 12 % en menores de 25 al 28 % en 55-64). Austria 31 %, Suiza 20 % | El que se pasa al eléctrico es maduro y con dinero, no joven. En Suiza hay recorrido |
+| Financiación | El 26 % tiene un leasing activo (un 33 % entre 35 y 44 años) y un 3 % lo ha terminado. El 84 % de los mayores de 65 nunca ha usado leasing | Los leasing terminados son una ventana clara para renovar |
+| Actividad | El 10 % no tiene ningún coche activo | Riesgo de fuga, o clientes a recuperar |
+| Taller | El 29 % no ha ido al taller en garantía | Público para planes de mantenimiento |
+| Conectividad | El 60 % tiene telemetría | Mantenimiento según uso real, solo en esa parte |
+| Consentimientos | Email 98 %, teléfono 86 %, correo 85 %. Nadie los tiene todos cerrados | El email llega a casi todos; el canal no distingue a unos clientes de otros |
 
-### ¿Qué problemas de calidad hemos encontrado y cómo los resolvemos?
+### ¿Qué problemas de calidad hemos encontrado y qué hacemos?
 
-| Problema | Resolución |
+| Problema | Qué hacemos |
 |---|---|
-| Granularidad mixta: los datos de cliente son constantes por cliente, los de vehículo por vehículo, y rol, taller y telemática varían por relación | Una fila por cliente (D1, `src/clean.py`) |
-| 908 cuentas de gran volumen (≥20 vehículos), mayoritariamente B2C | `log1p` + winsorización (D5); vigilar si forman un cluster propio |
-| Telemática ausente en el ~48 % de los clientes. Es un nulo estructural (vehículo no conectado, roles DRIVER/LEGACY/TEMP_USER) | Flag `has_telemetry` + ablación D3. La evidencia favorece no usarla en el modelo base |
-| `engine_concept` nulo en el 44 % y `fuel_type` en el 59 % (cuando falta el motor falta siempre el combustible) | Hoy: EQ → `ELECTRIC`, resto `UNKNOWN`. **Propuesta:** imputar desde `vehicle_type` (pureza del 99 %, recupera el 54 % de los nulos). Excluir `fuel_type` |
-| **Antigüedad = 36 meses en el 12 % de los clientes**, unas 9 veces más que los meses vecinos y con coches más viejos | Es un valor por defecto de carga, no fidelidad real. **Propuesta:** flag `tenure_is_default`. El 120 es un tope con muy pocos casos |
-| Socioeconómicos nulos (6,3 %), `population == 0` (73 filas), CP con longitud ≠ 4 (5 filas) | Mediana por país + flag |
-| Género inferido nulo (11 % de las filas) | Categoría `unknown`, fuera del modelo |
-| Redundancias: `role_type` ≡ `role == DRIVER`; `currently_connected_vehicles` = nº de vehículos actuales (salvo 4 clientes); poder adquisitivo y población ×3 (Spearman ≥ 0,96) | Una sola variable por concepto |
-| Columnas `*_mode` con listas y valores en bins; `*_all_counter` con extremos de 1,45·10⁹ | Excluir |
-| Extremos físicamente dudosos (velocidad media > 150 km/h, consumo ≥ 40 l/100 km) | Winsorizar p1-p99 (D6) |
-
-Las propuestas en negrita afectan a `src/clean.py` y se aplican con el visto bueno de su dueño.
+| Mezcla de niveles: cliente, vehículo y relación cliente-coche | Una fila por cliente (`src/clean.py`) |
+| 908 cuentas con 20 o más vehículos (el 92 % de sus filas figuran como B2C) | En el modelo con el nº de vehículos recortado; flag `is_heavy_account` para describirlas |
+| Telemetría que falta en el 40 % de los clientes (no tienen coche conectado) | Flag `has_telemetry`; fuera del modelo base y lo comprobamos en el reto 3 |
+| Motor vacío en el 44 % de las filas y combustible en el 59 % | Rellenamos el motor por versión comercial (solo versiones con ≥ 90 % de pureza) y por familia EQ; el resto `UNKNOWN`. Fuera `fuel_type` |
+| Antigüedad = 36 meses en el 12 % de los clientes, 9 veces más que los meses vecinos | Es un valor por defecto: flag `tenure_is_default` |
+| Poder adquisitivo y población vacíos (6 % de filas), población 0, códigos postales raros | Mediana de su país; la población 0 cuenta como vacía. Sin flag de "imputado" |
+| Género inferido vacío (11 % de filas) | Desconocido y fuera del modelo |
+| Columnas que repiten lo mismo: `role_type` = `role == DRIVER`, vehículos conectados = nº de vehículos actuales, poder adquisitivo y población ×3 | Una sola por concepto |
+| `*_mode` con listas y valores en tramos; contadores con extremos de 1,45·10⁹ | Fuera |
+| Extremos poco creíbles (velocidad media > 150 km/h, consumo ≥ 40 l/100 km) | Recorte p1-p99 y log en colas largas |
