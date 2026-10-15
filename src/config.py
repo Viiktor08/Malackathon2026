@@ -21,6 +21,6 @@ REF_DATE = "2026-10-15"   # fecha de referencia para calcular antigüedades
 RANDOM_STATE = 42
 SILHOUETTE_SAMPLE = 20_000
 K_RANGE = range(2, 13)
-K_FINAL = None            # se fija en el hito M2
+K_FINAL = 7               # elegido en el reto 3 (notebook 03_kmeans)
 
 AGE_ORDER = ["<25", "25-34", "35-44", "45-54", "55-64", "65+"]

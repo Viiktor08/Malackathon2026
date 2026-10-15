@@ -1,6 +1,5 @@
 # Datos reales de clientes: NUNCA al repo
 *.csv
-!outputs/labels_*.csv
 data/processed/*
 !data/processed/.gitkeep
 

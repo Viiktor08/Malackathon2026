@@ -27,19 +27,21 @@ from src import clean, config
 
 # --- Qué entra al modelo ----------------------------------------------------
 
-LOG_COLS = ["n_vehicles", "n_connected_now", "population", "workshop_visits_mean", "ppi_rel"]
+LOG_COLS = ["n_vehicles", "n_connected_now", "workshop_visits_mean", "ppi_rel"]
 NUM_COLS = ["age_ord", "tenure_months", "main_vehicle_age", "share_plugin_ev"]
 BIN_COLS = ["is_ch", "is_b2b", "tenure_is_default", "has_telemetry"]
 CAT_COLS = ["main_class_group", "main_engine", "finance_leasing_status"]
 
-# Variante con telemetría (ablación del reto 3)
+# Variantes que probamos en la ablación del reto 3 (ninguna entra en el modelo final)
+POPULATION_LOG_COLS = ["population"]
 TELEMETRY_LOG_COLS = ["trip_dist_avg", "fuel_cons_avg", "op_hours_mean"]
 TELEMETRY_NUM_COLS = ["speed_avg"]
 
 
-def feature_columns(telemetry=False):
+def feature_columns(telemetry=False, population=False):
     """Columnas de la tabla de clientes que usa el modelo, por bloque."""
-    log_cols = LOG_COLS + (TELEMETRY_LOG_COLS if telemetry else [])
+    log_cols = (LOG_COLS + (POPULATION_LOG_COLS if population else [])
+                + (TELEMETRY_LOG_COLS if telemetry else []))
     num_cols = NUM_COLS + (TELEMETRY_NUM_COLS if telemetry else [])
     return log_cols, num_cols, BIN_COLS, CAT_COLS
 
@@ -94,8 +96,8 @@ class QuantileClipper(OneToOneFeatureMixin, BaseEstimator, TransformerMixin):
 
 # --- Pipelines --------------------------------------------------------------
 
-def build_preprocessor(telemetry=False):
-    log_cols, num_cols, bin_cols, cat_cols = feature_columns(telemetry)
+def build_preprocessor(telemetry=False, population=False):
+    log_cols, num_cols, bin_cols, cat_cols = feature_columns(telemetry, population)
     log1p = FunctionTransformer(np.log1p, feature_names_out="one-to-one")
     columns = ColumnTransformer(
         [
@@ -111,19 +113,19 @@ def build_preprocessor(telemetry=False):
     return Pipeline([("pais", CountryMedianImputer()), ("columnas", columns)])
 
 
-def build_pipeline(k, telemetry=False, random_state=config.RANDOM_STATE):
+def build_pipeline(k=config.K_FINAL, telemetry=False, population=False, random_state=config.RANDOM_STATE):
     """Preprocesado + K-Means. Es lo que re-entrena el Jackknife."""
     return Pipeline([
-        ("prep", build_preprocessor(telemetry)),
+        ("prep", build_preprocessor(telemetry, population)),
         ("kmeans", KMeans(n_clusters=k, n_init=10, random_state=random_state)),
     ])
 
 
-def build_full_pipeline(telemetry=False):
+def build_full_pipeline(telemetry=False, population=False):
     """Del CSV crudo a X: construcción de la tabla de clientes + preprocesado."""
     return Pipeline([
         ("tabla_clientes", FunctionTransformer(clean.build_client_table)),
-        ("prep", build_preprocessor(telemetry)),
+        ("prep", build_preprocessor(telemetry, population)),
     ])
 
 
