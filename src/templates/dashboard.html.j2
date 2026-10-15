@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Segmentos de clientes</title>
+</head>
+<body>
+<h1>Segmentos de clientes</h1>
+<ul>
+{% for s in payload.segmentos %}  <li>{{ s.nombre }}</li>
+{% endfor %}</ul>
+<script id="datos" type="application/json">{{ data_json }}</script>
+</body>
+</html>

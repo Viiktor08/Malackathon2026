@@ -15,6 +15,8 @@ OUTPUTS_DIR = ROOT / "outputs"
 FIG_DIR = OUTPUTS_DIR / "figuras"
 LABELS_V0 = OUTPUTS_DIR / "labels_v0.csv"
 LABELS_FINAL = OUTPUTS_DIR / "labels_final.csv"
+DASHBOARD_HTML = OUTPUTS_DIR / "dashboard_segmentos.html"
+TEMPLATES_DIR = ROOT / "src" / "templates"
 
 # Constantes del análisis
 REF_DATE = "2026-10-15"   # fecha de referencia para calcular antigüedades
