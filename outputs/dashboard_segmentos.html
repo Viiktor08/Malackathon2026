@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Segmentos de clientes</title>
+<title>Benji · Segmentos de clientes</title>
 <style>
 :root {
   color-scheme: light;
@@ -143,8 +143,8 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 0 
 <body>
 <header>
   <div class="top">
-    <h1>Segmentos de clientes</h1>
-    <span class="sub">Malackathon 2026 · reto Mercedes-Benz · <span id="n-total"></span> clientes · Suiza y Austria</span>
+    <h1>Benji</h1>
+    <span class="sub">Segmentos de clientes · Malackathon 2026 · reto Mercedes-Benz · <span id="n-total"></span> clientes · Suiza y Austria</span>
     <span class="spacer"></span>
     <button class="btn" id="tema" type="button">Tema: automático</button>
   </div>
@@ -481,7 +481,7 @@ function ruta(mantenerScroll) {
   const main = document.getElementById("vista");
   main.innerHTML = "";
   if (seg) vistaSegmento(main, seg); else vistaGeneral(main);
-  document.title = (seg ? seg.nombre + " · " : "") + "Segmentos de clientes";
+  document.title = (seg ? seg.nombre + " · " : "") + "Benji · Segmentos de clientes";
   if (!mantenerScroll) window.scrollTo({top: 0});
 }
 function ir(slug) { if (location.hash !== "#" + slug) location.hash = slug; else ruta(); }
