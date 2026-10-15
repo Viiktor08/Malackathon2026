@@ -59,6 +59,14 @@ CLASS_TO_GROUP = {cls: grp for grp, classes in CLASS_GROUPS.items() for cls in c
 EV_CLASSES = ["EQA-/EQB-Class", "EQC-Class", "EQE-Class", "EQS-Class"]
 PLUGIN_OR_EV = ["PLUGIN_HYBRID", "ELECTRIC"]
 
+# Imputación del motor desde vehicle_type: solo versiones fiables
+ENGINE_MAP_MIN_PURITY = 0.90   # el motor más frecuente de la versión cubre >= 90 % de sus filas conocidas
+ENGINE_MAP_MIN_ROWS = 5        # y la versión tiene al menos 5 filas con motor conocido
+
+# months_as_mb_customer = 36 aparece ~9 veces más que sus vecinos (lo vio el EDA): valor por defecto
+TENURE_DEFAULT = 36
+HEAVY_ACCOUNT_MIN_VEHICLES = 20
+
 
 # --- Paso 1 -----------------------------------------------------------------
 
@@ -71,6 +79,17 @@ def load_raw(path=config.RAW_CSV):
 
 # --- Paso 2 -----------------------------------------------------------------
 
+def engine_map_from_vehicle_type(df):
+    """Motor más frecuente de cada vehicle_type, solo para las versiones fiables
+    (ver ENGINE_MAP_MIN_PURITY y ENGINE_MAP_MIN_ROWS)."""
+    known = df.loc[df["engine_concept"].notna(), ["vehicle_type", "engine_concept"]]
+    counts = known.value_counts().rename("n").reset_index()
+    total = counts.groupby("vehicle_type")["n"].transform("sum")
+    top = counts.assign(total=total, purity=counts["n"] / total).drop_duplicates("vehicle_type")
+    ok = top[(top["purity"] >= ENGINE_MAP_MIN_PURITY) & (top["total"] >= ENGINE_MAP_MIN_ROWS)]
+    return ok.set_index("vehicle_type")["engine_concept"]
+
+
 def prepare_vehicles(df, ref_date=config.REF_DATE):
     """Añade columnas a nivel vehículo que luego agregamos por cliente."""
     df = df.copy()
@@ -78,7 +97,8 @@ def prepare_vehicles(df, ref_date=config.REF_DATE):
     df["vehicle_age_years"] = (ref - df["date_of_first_registration"]).dt.days / 365.25
     df["class_group"] = df["model_class"].map(CLASS_TO_GROUP).fillna("OTRO")
 
-    engine = df["engine_concept"].copy()
+    # Motor: 1) el dato original, 2) la versión comercial (vehicle_type), 3) familia EQ
+    engine = df["engine_concept"].fillna(df["vehicle_type"].map(engine_map_from_vehicle_type(df)))
     engine[engine.isna() & df["model_class"].isin(EV_CLASSES)] = "ELECTRIC"
     df["engine_known"] = engine.notna()
     df["engine"] = engine.fillna("UNKNOWN")
@@ -109,6 +129,7 @@ def client_attributes(df):
     for c in ["consent_phone", "consent_epost", "consent_post"]:
         out[c] = out[c].astype(int)
     out["n_consents"] = out[["consent_phone", "consent_epost", "consent_post"]].sum(axis=1)
+    out["tenure_is_default"] = (out["tenure_months"] == TENURE_DEFAULT).astype(int)
     return out
 
 
@@ -146,6 +167,7 @@ def aggregate_vehicles(df):
         "workshop_visits_mean": g["workshop_visits_warranty_goodwill"].mean(),
         "has_telemetry": g["has_telemetry_row"].any().astype(int),
     })
+    out["is_heavy_account"] = (out["n_vehicles"] >= HEAVY_ACCOUNT_MIN_VEHICLES).astype(int)
 
     # % plug-in/eléctricos sobre los vehículos con motor conocido (NaN si no hay ninguno)
     n_known = g["engine_known"].sum()
