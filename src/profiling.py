@@ -44,6 +44,25 @@ _CANALES = {"telefono": "consent_phone", "email": "consent_epost", "correo": "co
 N_RASGOS = 3
 
 
+def fmt_num(x, decimals):
+    """Número en formato español: 1.234,5. Nulos → «—»."""
+    if x is None or pd.isna(x):
+        return "—"
+    x = round(float(x), decimals)
+    if x == 0:
+        x = 0.0  # evita «-0,0»
+    return f"{x:,.{decimals}f}".replace(",", "_").replace(".", ",").replace("_", ".")
+
+
+def fmt_kpi(key, value):
+    """Valor de un indicador con sus decimales y su unidad («11,7 %», «17 meses», «1,82×»)."""
+    spec = KPIS[key]
+    num = fmt_num(value, spec["decimals"])
+    if spec["unit"] == "×":
+        return f"{num}×"
+    return f"{num} {spec['unit']}" if spec["unit"] else num
+
+
 def add_profile_columns(clients):
     """Añade una columna por indicador. Las pct_* van en 0/1 (se pasan a % al agregar)."""
     df = clients.copy()
