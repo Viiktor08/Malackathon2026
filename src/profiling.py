@@ -16,7 +16,7 @@ KPIS = {
     "visitas_taller": {"short": "Taller", "label": "Visitas al taller por coche", "unit": "", "decimals": 1},
     "riqueza_relativa": {"short": "Riqueza rel.", "label": "Poder adquisitivo frente a su país", "unit": "×", "decimals": 2},
     "pct_electrificado": {"short": "Electrificado", "label": "Con eléctrico o enchufable", "unit": "%", "decimals": 1},
-    "pct_telemetria": {"short": "Conectado", "label": "Con coche conectado", "unit": "%", "decimals": 1},
+    "pct_telemetria": {"short": "Datos de uso", "label": "Con datos de uso (telemetría)", "unit": "%", "decimals": 1},
     "pct_sin_activo": {"short": "Sin coche activo", "label": "Sin ningún coche activo", "unit": "%", "decimals": 1},
     "pct_leasing_activo": {"short": "Leasing activo", "label": "Con leasing activo", "unit": "%", "decimals": 1},
     "pct_leasing_terminado": {"short": "Leasing terminado", "label": "Con leasing terminado", "unit": "%", "decimals": 1},

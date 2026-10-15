@@ -184,6 +184,31 @@ function deltaTexto(key, seg, base) {
   const u = spec.unit && spec.unit !== "×" ? " " + spec.unit : "";
   return (d >= 0 ? "+" : "") + fmtNum(d, spec.decimals) + u;
 }
+// Colores del mapa de calor: divergente azul ↔ gris ↔ rojo; texto negro o blanco según el contraste
+const DIVERGENTE = {light: {neg: "#2a78d6", mid: "#f0efec", pos: "#e34948"},
+                    dark: {neg: "#3987e5", mid: "#383835", pos: "#e66767"}};
+function temaActual() {
+  const t = document.documentElement.getAttribute("data-theme");
+  if (t === "light" || t === "dark") return t;
+  return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const hex = c => "#" + c.map(v => Math.round(v).toString(16).padStart(2, "0")).join("");
+function luminancia(h) {
+  const c = rgb(h).map(v => v / 255).map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+}
+function contraste(a, b) {
+  const [l1, l2] = [luminancia(a), luminancia(b)].sort((x, y) => y - x);
+  return (l1 + 0.05) / (l2 + 0.05);
+}
+function colorCelda(z) {
+  const P = DIVERGENTE[temaActual()], t = Math.min(Math.abs(z) / 2, 1);
+  const a = rgb(P.mid), b = rgb(z >= 0 ? P.pos : P.neg);
+  const fondo = hex(a.map((v, i) => v + (b[i] - v) * t));
+  const tinta = contraste(fondo, "#0b0b0b") >= contraste(fondo, "#ffffff") ? "#0b0b0b" : "#ffffff";
+  return [fondo, tinta];
+}
 function flecha(z) { return Math.abs(z) < 0.1 ? "≈" : (z > 0 ? "▲" : "▼"); }
 function detalles(titulo, cabecera, filas) {
   const head = cabecera.map((h, i) => `<th class="${i ? "num" : ""}">${esc(h)}</th>`).join("");
@@ -218,18 +243,18 @@ function barras(rows, opts) {
 // Segmento frente a total por categoría. rows: {label, seg, base}; valores en %
 function pareadas(rows, seg, fmt) {
   fmt = fmt || pct;
-  const W = 600, LW = 200, RH = 34, BH = 11, VW = 64;
+  const W = 600, LW = 200, RH = 36, BH = 11, VW = 64;
   const max = Math.max(1, ...rows.map(r => Math.max(r.seg ?? 0, r.base ?? 0)));
-  const svg = svgEl("svg", {viewBox: `0 0 ${W} ${rows.length * RH + 4}`, role: "img",
+  const svg = svgEl("svg", {class: "pareadas", viewBox: `0 0 ${W} ${rows.length * RH + 4}`, role: "img",
                             "aria-label": `${seg.nombre} frente al total`});
   svgEl("line", {x1: LW, x2: LW, y1: 0, y2: rows.length * RH + 4, stroke: "var(--axis)", "stroke-width": 1}, svg);
   rows.forEach((r, i) => {
     const y = i * RH + 2, g = svgEl("g", {}, svg);
     svgText(g, 0, y + RH / 2, r.label, "t-label");
     const ws = (W - LW - VW) * (r.seg ?? 0) / max, wb = (W - LW - VW) * (r.base ?? 0) / max;
-    svgEl("path", {d: hbarPath(LW, y + RH / 2 - BH - 1, ws, BH, 4), fill: segVar(seg.color_idx)}, g);
-    svgEl("path", {d: hbarPath(LW, y + RH / 2 + 1, wb, BH, 4), fill: "var(--base)"}, g);
-    svgText(g, LW + Math.max(ws, wb) + 6, y + RH / 2, fmt(r.seg), "t-value");
+    svgEl("path", {d: hbarPath(LW, y + RH / 2 - BH - 2, ws, BH, 4), fill: segVar(seg.color_idx)}, g);
+    svgEl("path", {d: hbarPath(LW, y + RH / 2 + 2, wb, BH, 4), fill: "var(--base)"}, g);
+    svgText(g, LW + ws + 6, y + RH / 2 - BH / 2 - 2, fmt(r.seg), "t-value");
     const hit = svgEl("rect", {x: 0, y, width: W, height: RH, class: "hit"}, g);
     hit.dataset.tip = `${r.label}\n${seg.nombre}: ${fmt(r.seg)}\nTotal: ${fmt(r.base)}`;
   });
@@ -327,9 +352,7 @@ function vistaGeneral(main) {
   const keys = Object.keys(KPIS);
   const filas = SEGS.map(s => {
     const celdas = keys.map(k => {
-      const z = s.z[k], t = Math.min(Math.abs(z) / 2, 1), polo = z >= 0 ? "--pos" : "--neg";
-      const fondo = `color-mix(in oklab, var(${polo}) ${Math.round(t * 100)}%, var(--mid))`;
-      const tinta = t > 0.6 ? "#ffffff" : "var(--ink)";
+      const [fondo, tinta] = colorCelda(s.z[k]);
       const tip = `${s.nombre} · ${KPIS[k].label}\n${s.kpis_fmt[k]} (media: ${BASE.kpis_fmt[k]})`;
       return `<td style="background:${fondo};color:${tinta}" data-tip="${esc(tip)}">${esc(s.kpis_fmt[k])}</td>`;
     }).join("");
@@ -402,12 +425,12 @@ function vistaSegmento(main, seg) {
   rel.insertAdjacentHTML("beforeend", distTabla(seg, "leasing"));
 
   const uso = bloque(grid, `<h2>¿Cómo usa el coche?</h2>${leyenda(seg)}
-    <p class="lead">Solo de los clientes con coche conectado: el ${pct(seg.uso.cobertura)} de este segmento (${pct(BASE.uso.cobertura)} del total). Medianas.</p>`);
+    <p class="lead">Solo de los clientes con datos de uso (telemetría): el ${pct(seg.uso.cobertura)} de este segmento (${pct(BASE.uso.cobertura)} del total). Medianas.</p>`);
   uso.appendChild(pareadas([{label: "Horas de uso", seg: seg.uso.horas_mediana, base: BASE.uso.horas_mediana}], seg, x => fmtNum(x, 0) + " h"));
   uso.appendChild(pareadas([{label: "Consumo (l/100 km)", seg: seg.uso.consumo_mediana, base: BASE.uso.consumo_mediana}], seg, x => fmtNum(x, 1)));
   uso.insertAdjacentHTML("beforeend", `<p class="note">Los eléctricos no gastan combustible, así que su consumo no cuenta en la mediana.</p>` +
     detalles("", ["Dato", seg.nombre, "Total"], [
-      ["Con coche conectado", pct(seg.uso.cobertura), pct(BASE.uso.cobertura)],
+      ["Con datos de uso", pct(seg.uso.cobertura), pct(BASE.uso.cobertura)],
       ["Horas de uso (mediana)", fmtNum(seg.uso.horas_mediana, 0), fmtNum(BASE.uso.horas_mediana, 0)],
       ["Consumo l/100 km (mediana)", fmtNum(seg.uso.consumo_mediana, 1), fmtNum(BASE.uso.consumo_mediana, 1)]]));
 
@@ -432,7 +455,7 @@ function pintarNav(actual) {
     SEGS.map(s => `<button class="chip" data-go="${s.slug}" type="button" aria-current="${actual === s.slug}">
       <span class="dot" style="background:${segVar(s.color_idx)}"></span>${esc(s.nombre)} <span class="pct">${pct(s.pct)}</span></button>`).join("");
 }
-function ruta() {
+function ruta(mantenerScroll) {
   const slug = decodeURIComponent(location.hash.slice(1)) || "general";
   const seg = SEGS.find(s => s.slug === slug);
   const actual = seg ? seg.slug : "general";
@@ -441,7 +464,7 @@ function ruta() {
   main.innerHTML = "";
   if (seg) vistaSegmento(main, seg); else vistaGeneral(main);
   document.title = (seg ? seg.nombre + " · " : "") + "Segmentos de clientes";
-  window.scrollTo({top: 0});
+  if (!mantenerScroll) window.scrollTo({top: 0});
 }
 function ir(slug) { if (location.hash !== "#" + slug) location.hash = slug; else ruta(); }
 
@@ -483,6 +506,7 @@ function aplicarTema(t) {
   else document.documentElement.setAttribute("data-theme", t);
   document.getElementById("tema").textContent = "Tema: " + NOMBRE_TEMA[t];
   try { localStorage.setItem("tema-segmentos", t); } catch (err) { /* sin almacenamiento: no pasa nada */ }
+  if (document.getElementById("vista").children.length) ruta(true);
 }
 let tema = "auto";
 try { tema = localStorage.getItem("tema-segmentos") || "auto"; } catch (err) { tema = "auto"; }
@@ -493,7 +517,8 @@ document.getElementById("tema").addEventListener("click", () => {
 });
 
 document.getElementById("n-total").textContent = fmtNum(D.meta.n, 0);
-window.addEventListener("hashchange", ruta);
+window.addEventListener("hashchange", () => ruta());
+try { window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => ruta(true)); } catch (err) { /* navegador antiguo */ }
 ruta();
 {% endraw %}
 </script>
