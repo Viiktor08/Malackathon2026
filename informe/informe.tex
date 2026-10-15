@@ -335,6 +335,36 @@ Esto matiza algo que dijimos en el reto 3. Allí descartamos $k=6$ porque cambia
 
 \textbf{¿Y el modelo que usamos en los retos 3 y 4?} Sigue entrenado con 10 arranques. Comprobamos que con 50 llega a la misma solución: la inercia es prácticamente igual (1.098.056 frente a 1.098.057) y el 99,8\,\% de los clientes queda en el mismo segmento (ARI 0,994; cambian unos 370 de 173.456). Por eso no rehicimos los retos anteriores, y los segmentos, sus nombres y sus planes siguen siendo válidos. Si el modelo se lleva a producción, recomendamos 50 arranques: cuesta unos segundos más y evita que un reentrenamiento con datos nuevos caiga en una solución peor.
 
+\clearpage
+\section{Estrategia de marketing por segmento}
+
+Cada segmento pide un trato distinto. Lo que decide qué ofrecer y cuándo es el segmento; el canal lo decide el tipo de mensaje, porque los consentimientos son prácticamente iguales en los siete (email 98\,\%, teléfono 86\,\%, correo postal 85\,\%).
+
+\begin{table}[H]
+\centering\footnotesize
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}p{2.3cm}>{\raggedright\arraybackslash}p{3.9cm}L>{\raggedright\arraybackslash}p{2.9cm}}
+\toprule
+Segmento & Quién es & Qué hacemos & Cómo le hablamos \\
+\midrule
+\textbf{Coche en garantía} \newline 24,1\,\% · \textbf{Retener} & 48 meses con la marca y coche de 5,2 años (la mitad pasa de 5): se le acaba la garantía. Es el que más la ha usado (4,4 visitas) & Antes de que venza, extensión de garantía o contrato de mantenimiento con precio cerrado, para que no se vaya a un taller independiente. A quien tenga el coche más viejo, renovación con valoración del suyo y prueba de un híbrido (solo el 1,7\,\% está electrificado) & Aviso personal meses antes del fin de la garantía (estimado por la matriculación), por email y teléfono \\
+\addlinespace
+\textbf{Recién llegados} \newline 18,3\,\% · \textbf{Vincular} & 18 meses como clientes, coche de 2,5 años y el 45\,\% aún sin visitas en garantía. Uno de cada cinco lleva furgoneta & No es momento de vender coche: primera revisión en el taller oficial, activar la app y los servicios conectados, accesorios & Programa de bienvenida por email durante el primer año, activado por los meses como cliente \\
+\addlinespace
+\textbf{Coche veterano} \newline 18,2\,\% · \textbf{Renovar} & Coche de 8,4 años, el 94\,\% compró sin leasing y el 57\,\% no tiene visitas en garantía. Un tercio tiene menos de 35 años & Renovación con valoración de su coche y financiación, que casi no han usado. Seminuevos certificados para los más jóvenes. Antes, una revisión gratuita para traerlos al taller oficial & Email y correo postal con una oferta concreta e invitación a probar los modelos actuales \\
+\addlinespace
+\textbf{Electrificados} \newline 15,9\,\% · \textbf{Acompañar} & Todos tienen un eléctrico o enchufable, con coche de 2,9 años. El 35\,\% tiene leasing activo & Que su siguiente coche siga siendo eléctrico y Mercedes: al terminar el leasing, paso de enchufable a eléctrico puro. Servicios de carga, \textit{wallbox} y revisión de batería & Email con contenido práctico: carga, autonomía y novedades EQ \\
+\addlinespace
+\textbf{Desconectados} \newline 9,0\,\% · \textbf{Recuperar} & Ningún coche activo. El 11,7\,\% terminó un leasing y el 30\,\% nunca llegó a conectar un coche & Dos tratamientos: a quien terminó el leasing, una oferta de vuelta; a quien nunca conectó, una campaña de activación. Antes, una encuesta corta para saber quién se ha ido de verdad & Teléfono para los de leasing terminado y email para el resto; tono cercano, sin presión \\
+\addlinespace
+\textbf{Multivehículo} \newline 8,8\,\% · \textbf{Ampliar} & 7,2 vehículos de media y 54 meses con la marca. El 48\,\% tiene leasing activo, el 48\,\% ya tiene algún electrificado y uno de cada cinco lleva furgoneta. Aquí están 904 de las 908 cuentas grandes & Tratarlos como cuentas: renovación y electrificación de flota con condiciones por volumen y contrato de mantenimiento de flota. Separar a las familias con varios coches de las flotas & Teléfono con un gestor de cuenta; nada de campañas masivas \\
+\addlinespace
+\textbf{Zonas premium} \newline 5,6\,\% · \textbf{Elevar} & Viven en zonas con 1,8 veces la riqueza típica de su país, casi todos en Suiza, y tienen el doble de gama alta que la media (8,5\,\% frente a 4,1\,\%) & Subir de gama (Clase S, EQS, AMG, Clase G), servicio premium de recogida y entrega, eventos exclusivos & Asesor personal por teléfono y correo postal cuidado \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\textbf{Por dónde empezar.} Primero, Coche en garantía y Desconectados: son los dos segmentos donde esperar cuesta clientes, porque uno está a punto de perder la garantía y el otro ya no tiene coche activo. Después, la renovación de Coche veterano y Electrificados, y por último la subida de gama de Zonas premium. Recién llegados y Multivehículo no van por campañas puntuales: el primero es un programa de bienvenida continuo y el segundo lo lleva un gestor de cuentas. Cada campaña debería lanzarse con un pequeño grupo de control que no la reciba, para medir su efecto real.
+
 \section{Resultado final}
 
 Partimos de 302.850 filas cliente-vehículo y terminamos con \textbf{siete segmentos de clientes}, cada uno con un rasgo claro y una acción concreta: retener, vincular, renovar, acompañar, recuperar, ampliar y elevar. Los retos avanzados los pusieron a prueba de tres formas distintas, y todas apuntan en la misma dirección:
