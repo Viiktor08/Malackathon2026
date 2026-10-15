@@ -241,17 +241,121 @@ Para los nombres seguimos cuatro reglas: dos o tres palabras, que describan el c
 
 Todo esto está también en un \textbf{dashboard} (\var{outputs/dashboard\_segmentos.html}). Es un único fichero que se abre en cualquier navegador sin instalar nada y que solo lleva datos agregados. Tiene una vista general y una ficha por segmento con su plan en las cuatro palancas del reto: oferta de vehículo, mantenimiento, fidelización y comunicación.
 
-\section{Resultado final}
+\section{Reto avanzado 1 · Comparativa de algoritmos}
 
-Partimos de 302.850 filas cliente-vehículo y terminamos con \textbf{siete segmentos de clientes estables}, cada uno con un rasgo claro y una acción concreta: retener, vincular, renovar, acompañar, recuperar, ampliar y elevar. Por el camino:
+La pregunta es doble: ¿habría funcionado mejor otro algoritmo? y, sobre todo, ¿saldrían los mismos segmentos? Si con otro método los grupos cambiaran por completo, las campañas del reto 4 dependerían de una elección técnica y no de los clientes.
+
+Comparamos K-Means con tres alternativas que agrupan de formas muy distintas, todas con $k=7$ y la misma matriz de 28 variables: dos \textit{Gaussian Mixture} (con covarianza diagonal y completa), que ven cada grupo como una nube de probabilidad, y \textit{Agglomerative} (Ward), que une clientes de abajo arriba. Agglomerative necesita la distancia entre todos los pares de clientes (más de 100\,GB con 173.456), así que lo entrenamos sobre 10.000 y asignamos al resto al centro más cercano. El silhouette lo calculamos para todos sobre la misma muestra de 20.000 clientes. La estabilidad la medimos con una prueba igual para todos: entrenar con otras submuestras de 10.000 clientes y comparar con el ARI.
+
+\begin{table}[H]
+\centering\small
+\begin{tabularx}{\linewidth}{lcc>{\centering\arraybackslash}X>{\centering\arraybackslash}Xc}
+\toprule
+Algoritmo & Silhouette & Davies-Bouldin & Estabilidad (ARI) & Clientes en el mismo segmento que K-Means & Grupos (mín.--máx.) \\
+\midrule
+\textbf{K-Means} & \textbf{0,129} & \textbf{1,82} & \textbf{0,95} & --- & 5,6--24,1\,\% \\
+GMM diagonal & 0,053 & 3,53 & 0,69 & 46\,\% & 3,9--37,6\,\% \\
+GMM completo & 0,026 & 4,36 & 0,70 & 40\,\% & 1,4--49,8\,\% \\
+Agglomerative (Ward) & 0,122 & 1,82 & 0,76 & 87\,\% & 5,4--25,2\,\% \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+K-Means es el que mejor separa y, sobre todo, el más estable. Además:
 
 \begin{itemize}
-  \item Pasamos el análisis a nivel cliente, que era la decisión que más cambiaba los resultados.
-  \item Arreglamos lo que se podía arreglar (el motor por versión comercial, el valor por defecto de la antigüedad) y no rellenamos lo que habría sido inventar (la telemetría, el género).
-  \item Elegimos cada variable y cada parámetro con un dato delante. Cuando una idea no aportaba, como la población o la telemetría, la quitamos.
-  \item Elegimos $k$ mirando también la estabilidad, que fue lo que descartó $k=6$.
+  \item \textbf{GMM completo dedica un grupo entero al artefacto de los 36 meses} (el 69\,\% de ese grupo tiene la antigüedad por defecto), y sus grupos van del 1,4\,\% al 50\,\% de los clientes. No sirve para marketing.
+  \item \textbf{DBSCAN}, que no necesita $k$, mete al 99\,\% de los clientes en un solo grupo. No hay zonas densas separadas: los clientes forman un continuo, igual que nos decía el silhouette bajo del reto 3.
+  \item \textbf{Agglomerative deja al 87\,\% de los clientes en el segmento equivalente} aunque construye los grupos de otra manera. \textbf{Electrificados sale igual con los cuatro algoritmos} (más del 90\,\% de sus clientes juntos), y Desconectados, Multivehículo y Zonas premium se mantienen por encima del 92\,\% con Agglomerative. El que más cambia es Recién llegados: un tercio de sus clientes pasa a Coche en garantía, Multivehículo o Coche veterano.
 \end{itemize}
 
-Hay límites que conviene tener presentes. El silhouette es bajo (0,13), algo normal con datos mixtos de clientes reales: los segmentos son zonas con más densidad, no grupos aislados. ``Sin coche activo'' es una señal de fuga, no una prueba. Y en el 12\,\% de los clientes la antigüedad es un valor por defecto. En los retos avanzados compararemos K-Means con otros algoritmos, veremos los segmentos en dos dimensiones con PCA y mediremos su estabilidad con Jackknife.
+Hay que leer esta comparativa con cuidado. Las métricas de separación miden distancias a centros, que es justo lo que optimiza K-Means, y además elegimos las variables mirando el silhouette de K-Means (por ejemplo, al quitar la población). Así que parte de su ventaja viene de cómo está montado el problema. GMM tiene otras dos desventajas: supone grupos con forma de campana cuando 20 de las 28 columnas son 0/1, y lo lanzamos con 3 arranques frente a los 10 de K-Means (es mucho más lento), así que parte de su inestabilidad puede venir de ahí. Y el parecido de Agglomerative está algo inflado por asignar al centro más cercano: con sus propias etiquetas baja a un ARI de 0,49. Por todo eso no decidimos solo con las métricas: lo que inclina la balanza es la estabilidad y el sentido de negocio de los grupos. \textbf{Mantenemos K-Means.}
+
+\section{Reto avanzado 2 · Reducción de dimensionalidad (PCA)}
+
+Aplicamos PCA a la misma matriz que vio K-Means, sin reescalarla, para ver el espacio tal y como lo vio el modelo. Lo usamos solo para mirar: los segmentos siguen siendo los del reto 3.
+
+\textbf{Varianza.} Las dos primeras componentes recogen el 33,5\,\% de la variación (18,5\,\% y 15,0\,\%), y con la tercera llegamos al 44,7\,\%. La varianza se reparte entre las siete primeras y cae a la mitad en la octava; para el 80\,\% hacen falta nueve. No hay una reducción barata a dos o tres dimensiones.
+
+\textbf{Qué significa cada componente.} Las tres primeras son tres ideas de negocio distintas:
+
+\begin{itemize}
+  \item \textbf{PC1 · intensidad de la relación con la marca}: suben la antigüedad (+0,50), el número de vehículos (+0,47), los vehículos activos (+0,44) y las visitas en garantía (+0,40). Separa Multivehículo de Desconectados.
+  \item \textbf{PC2 · electrificación frente a coche con años}: sube la proporción de enchufables (+0,56) y bajan la edad del coche ($-$0,55) y la antigüedad ($-$0,42). Separa Electrificados de Coche en garantía y Coche veterano.
+  \item \textbf{PC3 · perfil personal}: suben la edad del cliente (+0,50) y la riqueza relativa de su zona (+0,45). Es donde aparece Zonas premium.
+\end{itemize}
+
+Ninguna variable binaria pesa más de 0,3 en las cinco primeras componentes. Es consecuencia de la decisión del reto 2 de no escalarlas: las 8 numéricas aportan el 76\,\% de la varianza de la matriz.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{06_pca_por_segmento.png}
+\caption{Cada segmento (en color) sobre el resto de clientes (en gris), en el plano PC1--PC2. El último panel muestra Zonas premium en PC1--PC3, donde sí se separa.}
+\end{figure}
+
+\textbf{¿Son separables los segmentos? No del todo.} Cada uno ocupa su zona, pero las fronteras se pisan. Hay dos causas distintas:
+
+\begin{itemize}
+  \item \textbf{La proyección}: si asignamos a cada cliente el centro más cercano usando solo las dos primeras componentes, solo entre el 60\,\% y el 73\,\% queda en su segmento (en Zonas premium, el 21\,\%; con la PC3 sube al 62\,\%). Con siete componentes ya es el 99\,\%.
+  \item \textbf{Los propios datos}: incluso en las 28 dimensiones el silhouette es 0,13, y DBSCAN no encuentra grupos aislados. Los segmentos son cortes de un continuo, no islas.
+\end{itemize}
+
+Para marketing esto no es un problema, siempre que se tenga en cuenta: los clientes de frontera se parecen a dos segmentos a la vez.
+
+\textbf{Un hallazgo nuevo.} En el panel de Desconectados aparece una franja separada del resto. La forman clientes con antigüedad casi nula: hay 7.254 clientes con exactamente 0 meses, más del doble que con 1 mes, y el 65\,\% no tiene coche activo (frente al 22\,\% con 1 mes). Como el diccionario define la antigüedad como meses ``desde su primera conexión a un coche'', nuestra hipótesis es que el 0 marca a clientes que nunca han llegado a conectar uno. Si es así, Desconectados tiene dos públicos: los que nunca activaron la relación (campaña de activación) y los que la tuvieron y la perdieron (campaña de recuperación). Habría que confirmarlo con Mercedes-Benz antes de usarlo.
+
+\section{Reto avanzado 3 · Estabilidad con Jackknife}
+
+Un buen silhouette no garantiza que los segmentos sean \emph{reproducibles}. El Jackknife lo comprueba: generamos 20 submuestras quitando cada vez un 15\,\% de clientes al azar, reentrenamos \textbf{el pipeline entero} (también las medianas, los recortes y el escalado, para que los clientes quitados no influyan) y miramos si cada cliente sigue en su segmento. Como K-Means numera los grupos al azar, antes de comparar emparejamos los grupos de cada submuestra con los de referencia mediante el algoritmo húngaro. Sin este paso, la coincidencia saldría del 0\,\% aunque los grupos fueran idénticos.
+
+\subsection*{Lo primero que encontramos: 10 arranques no bastan}
+
+Con el modelo tal como estaba (10 arranques de K-Means), 17 submuestras reproducían la segmentación casi a la perfección (99,3--99,9\,\%), pero tres se quedaban entre el 76\,\% y el 79\,\%. Había dos explicaciones posibles: que los datos tuvieran otra segmentación igual de buena o que el algoritmo no encontrara la mejor. Lo resolvimos con la inercia. En esas tres submuestras, la solución con 10 arranques tenía más inercia (entre 944.000 y 954.000) que la solución de referencia (unos 933.500), y con 50 arranques, o arrancando desde nuestra solución, K-Means volvía a ella. \textbf{El problema era del entrenamiento, no de los datos}: K-Means se quedaba en un óptimo local peor.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\linewidth]{07_coincidencia_por_submuestra.png}
+\caption{Clientes que siguen en su segmento en cada submuestra, con 10 y con 50 arranques de K-Means.}
+\end{figure}
+
+\subsection*{Resultado con 50 arranques}
+
+\begin{itemize}
+  \item \textbf{El 99,8\,\% de los clientes sigue en su segmento} de media (99,6\,\% en la peor submuestra), y el 99,0\,\% no cambia nunca en ninguna. Las submuestras también coinciden entre sí (ARI medio de 0,99).
+  \item \textbf{Ningún segmento es inestable}: los siete tienen un Jaccard de 0,994 o más (por encima de 0,85 ya se considera muy estable).
+  \item \textbf{Solo 863 clientes (0,5\,\%) cambian de segmento} en más de una de cada cinco submuestras, y \textbf{todos están en el 10\,\% de clientes más cercano a una frontera}, es decir, casi a la misma distancia de dos centros. Fuera de ese 10\,\% no hay ningún saltador. Además, solo saltan entre segmentos vecinos, sobre todo en el triángulo Coche en garantía -- Coche veterano -- Recién llegados.
+  \item Los segmentos más sólidos son los de rasgo nítido: \textbf{Desconectados} (0,15\,\% de saltadores) y \textbf{Electrificados} (0,23\,\%). Los menos sólidos, aunque muy estables, son los del ciclo de vida del coche: Coche en garantía (0,67\,\%), Recién llegados (0,65\,\%) y Coche veterano (0,56\,\%).
+\end{itemize}
+
+\subsection*{Qué cambia respecto al reto 3}
+
+Repetimos el Jackknife con $k=6$ y $k=8$, también con 50 arranques. \textbf{$k=7$ es el más estable de los tres} en todas las medidas: 99,76\,\% de coincidencia media frente a 99,50\,\% y 99,48\,\%; 0,50\,\% de saltadores frente a 0,87\,\% y 0,86\,\%; y el mejor Jaccard en su segmento más débil. $k=8$ solo partiría Coche veterano en dos.
+
+Esto matiza algo que dijimos en el reto 3. Allí descartamos $k=6$ porque cambiaba según la semilla, y eso ocurría con 10 arranques: con 50, $k=6$ también es estable entre semillas (ARI de 0,995 y 0,999). Aquella inestabilidad era del entrenamiento, no de $k=6$. La elección de $k=7$ se mantiene, pero ahora con un argumento más sólido: es el número de segmentos que mejor se reproduce cuando cambian los datos.
+
+\textbf{¿Y el modelo que usamos en los retos 3 y 4?} Sigue entrenado con 10 arranques. Comprobamos que con 50 llega a la misma solución: la inercia es prácticamente igual (1.098.056 frente a 1.098.057) y el 99,8\,\% de los clientes queda en el mismo segmento (ARI 0,994; cambian unos 370 de 173.456). Por eso no rehicimos los retos anteriores, y los segmentos, sus nombres y sus planes siguen siendo válidos. Si el modelo se lleva a producción, recomendamos 50 arranques: cuesta unos segundos más y evita que un reentrenamiento con datos nuevos caiga en una solución peor.
+
+\section{Resultado final}
+
+Partimos de 302.850 filas cliente-vehículo y terminamos con \textbf{siete segmentos de clientes}, cada uno con un rasgo claro y una acción concreta: retener, vincular, renovar, acompañar, recuperar, ampliar y elevar. Los retos avanzados los pusieron a prueba de tres formas distintas, y todas apuntan en la misma dirección:
+
+\begin{itemize}
+  \item \textbf{Los segmentos están en los datos, no en el algoritmo.} Otro algoritmo que construye los grupos de forma completamente distinta deja al 87\,\% de los clientes en el mismo segmento, y si quitamos al azar el 15\,\% de los clientes, el 99,8\,\% sigue en el suyo.
+  \item \textbf{Hay dos tipos de segmentos.} Los de rasgo nítido (Electrificados, Desconectados, Multivehículo y Zonas premium) salen con cualquier algoritmo y son los más estables: sobre ellos se pueden lanzar campañas con total confianza. Los del ciclo de vida del coche (Coche en garantía, Recién llegados y Coche veterano) son cortes en un continuo de edad del coche y antigüedad: concentran los cambios entre algoritmos, el solapamiento en el PCA y los pocos clientes que saltan en el Jackknife. En sus campañas conviene afinar también con la variable concreta, por ejemplo la edad del coche.
+  \item \textbf{Los clientes forman un continuo, no islas.} Lo dicen el silhouette (0,13), DBSCAN, el PCA y el Jackknife. No es un defecto: los segmentos son cortes útiles de ese continuo, y los clientes que quedan en la frontera se pueden identificar por su distancia a los centros.
+\end{itemize}
+
+\subsection*{Recomendaciones}
+
+\begin{enumerate}
+  \item Entrenar el modelo con 50 arranques en producción y repetir el Jackknife en cada reentrenamiento.
+  \item Usar la distancia a la frontera como nota de confianza de cada cliente: para el 10\,\% más cercano a una frontera, elegir ofertas que encajen en los dos segmentos vecinos.
+  \item Empezar por las campañas de los segmentos de rasgo nítido, que son los de asignación más segura.
+  \item Confirmar con Mercedes-Benz el significado de los valores de 0 y 36 meses de antigüedad, y separar en Desconectados a los clientes que nunca activaron la relación de los que la perdieron.
+\end{enumerate}
+
+\subsection*{Límites}
+
+El silhouette es bajo (0,13), algo normal con datos mixtos de clientes reales. Elegimos las variables mirando el silhouette de K-Means, así que las comparaciones basadas en esa métrica le favorecen; por eso nos apoyamos también en la estabilidad y en el sentido de negocio. ``Sin coche activo'' es una señal de fuga, no una prueba, y en el 12\,\% de los clientes la antigüedad es un valor por defecto. Por último, el Jackknife mide si la segmentación es reproducible, no si es útil: su utilidad comercial es lo que defendemos en el reto 4.
 
 \end{document}
