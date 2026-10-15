@@ -39,7 +39,7 @@ Víctor Tirado · Alfonso del Álamo · Vicente Díaz\\[6pt]
 
 El reto consiste en segmentar a los clientes de Mercedes-Benz con K-Means y describir cada segmento de forma que un equipo de marketing lo pueda usar: qué ofrecerle, cómo cuidar su mantenimiento, cómo fidelizarlo y cómo hablarle.
 
-Trabajamos con 302.850 filas de clientes de Suiza (66\,\%) y Austria (34\,\%). Cada reto básico tiene su notebook, y aquí contamos lo que hicimos en cada uno: la decisión que tomamos, el dato que la respalda y lo que salió. Los notebooks están ejecutados y documentados, por si alguien quiere ver el detalle.
+Trabajamos con 302.850 filas de clientes de Suiza (66\,\%) y Austria (34\,\%). El informe sigue el orden en que lo hicimos. En los retos básicos construimos los siete segmentos. En los avanzados comprobamos si nos podemos fiar de ellos: si otro algoritmo daría lo mismo, cómo se ven y si se mantienen al cambiar los datos. Al final, con todo eso, decidimos qué hacer con cada segmento. En cada paso contamos la decisión que tomamos, el dato que la respalda y lo que salió. Los notebooks están ejecutados y documentados, por si alguien quiere ver el detalle.
 
 \begin{center}
 \small
@@ -50,7 +50,10 @@ Reto & Notebook & Qué contiene \\
 1 · EDA y calidad & \var{01\_eda\_calidad} & Exploración, nulos, inconsistencias y columnas descartadas \\
 2 · Features & \var{02a\_features\_cliente}, \var{02b\_pipeline} & Tabla por cliente, variables derivadas y pipeline \\
 3 · K-Means & \var{03\_kmeans} & Elección de variables y de $k$, modelo final \\
-4 · Interpretación & \var{04\_interpretacion} & Perfil, nombre y plan de cada segmento, y dashboard \\
+4 · Interpretación & \var{04\_interpretacion} & Perfil y nombre de cada segmento, y dashboard \\
+A1 · Comparativa & \var{05\_comparativa} & K-Means frente a otros algoritmos \\
+A2 · PCA & \var{06\_pca} & Los segmentos en pocas dimensiones \\
+A3 · Jackknife & \var{07\_jackknife} & Estabilidad de los segmentos \\
 \bottomrule
 \end{tabularx}
 \end{center}
@@ -90,9 +93,9 @@ Poder adquisitivo y población & 6\,\% & Código postal ausente o sin datos & Me
 \subsection*{Inconsistencias que encontramos}
 
 \begin{itemize}
-  \item \textbf{Un pico de antigüedad en 36 meses}: 21.179 clientes (12\,\%) tienen exactamente 36 meses, unas 9 veces más que los meses vecinos, y con coches más viejos que la media. Tiene toda la pinta de ser un valor por defecto de carga, así que lo marcamos con un flag (\var{tenure\_is\_default}).
+  \item \textbf{Un pico de antigüedad en 36 meses}: 21.179 clientes (12\,\%) tienen exactamente 36 meses, unas 9 veces más que los meses vecinos, y con coches más viejos que la media. Todo apunta a un valor por defecto de carga, así que lo marcamos con un flag (\var{tenure\_is\_default}).
   \item \textbf{Columnas que dicen lo mismo}: \var{role\_type} = B2B es exactamente \var{role} = DRIVER; \var{currently\_connected\_vehicles} coincide con el número de vehículos activos salvo en 4 clientes; y las cinco variables socioeconómicas se reducen a dos (correlaciones de 0,96 a 1,00). Nos quedamos con una de cada.
-  \item \textbf{Columnas inservibles}: las \var{*\_mode} son texto y a veces traen listas enteras de valores; los contadores de telemetría llegan a 1.450 millones. Fuera.
+  \item \textbf{Columnas inservibles}: las \var{*\_mode} son texto y a veces traen listas enteras de valores; los contadores de telemetría llegan a 1.450 millones. Las descartamos.
   \item \textbf{Valores extremos} poco creíbles (velocidades medias de más de 150\,km/h, consumos de 50\,l/100\,km): los recortamos en el pipeline.
 \end{itemize}
 
@@ -162,7 +165,7 @@ K-Means agrupa por distancias, así que hay que preparar las variables. El escal
   \item Estandarización de las numéricas; las binarias y las \textit{one-hot} se quedan en 0/1 para que la clase o el motor no acaparen el modelo.
 \end{enumerate}
 
-El resultado es una matriz de \textbf{173.456 clientes por 28 columnas}: 8 numéricas, 4 indicadores y 16 \textit{one-hot}. El mismo pipeline puede ir directamente del CSV a la matriz, y es el que reutilizaremos en los retos avanzados.
+El resultado es una matriz de \textbf{173.456 clientes por 28 columnas}: 8 numéricas, 4 indicadores y 16 \textit{one-hot}. El mismo pipeline puede ir directamente del CSV a la matriz, y es el que reutilizamos en los retos avanzados.
 
 \section{Reto 3 · Modelo K-Means}
 
@@ -193,7 +196,7 @@ Miramos cinco criterios a la vez, porque ninguno basta solo:
   \item \textbf{Silhouette.} Es bajo en todos los $k$ (de 0,11 a 0,16), cosa esperable con datos de clientes reales y muchas variables binarias. Se mantiene plano entre 3 y 7 (alrededor de 0,13), con un pico en $k=6$ (0,135), y baja a partir de 8. Lo usamos para comparar, no como nota.
   \item \textbf{Davies-Bouldin.} Mejora hasta $k=7$--8 (1,82 en $k=7$).
   \item \textbf{Tamaño mínimo.} Con $k=7$, el cluster más pequeño tiene el 5,6\,\% de los clientes; ninguno es residual.
-  \item \textbf{Estabilidad.} Entrenamos cada $k$ con cuatro semillas y comparamos con el ARI. \textbf{$k=6$ es inestable} (ARI de 0,54 con dos de las semillas): su pico de silhouette depende del azar. $k=7$ sale prácticamente idéntico con todas (1,00, 1,00 y 0,99).
+  \item \textbf{Estabilidad.} Entrenamos cada $k$ con cuatro semillas y comparamos con el ARI. \textbf{$k=6$ es inestable} (ARI de 0,54 con dos de las semillas): su pico de silhouette depende del azar. $k=7$ sale prácticamente idéntico con todas (1,00, 1,00 y 0,99). En el Jackknife (reto avanzado 3) veremos que esto dependía del número de arranques de K-Means y lo revisamos allí.
 \end{itemize}
 
 Nos quedamos con \textbf{$k=7$}. Coincide con el último escalón del codo, está entre los mejores en silhouette y Davies-Bouldin, es estable y siete segmentos son manejables para un equipo de marketing. Los clusters quedan numerados por tamaño, del 24,1\,\% al 5,6\,\%. Por cluster, el más nítido es el de los electrificados (silhouette 0,16) y el más difuso el de multivehículo (0,07), que mezcla familias con varios coches y flotas.
@@ -214,32 +217,31 @@ Cada segmento lo comparamos siempre con el total de clientes, midiendo cuántas 
 
 \begin{table}[H]
 \centering\small
-\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}p{2.6cm}r>{\raggedright\arraybackslash}p{5.4cm}L}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}p{3cm}rL}
 \toprule
-Segmento & \% & Lo que le define & Qué hacemos \\
+Segmento & \% & Lo que le define \\
 \midrule
-\textbf{Coche en garantía} & 24,1 & El que más ha usado la garantía (4,4 visitas por coche, frente a 2,1), 48 meses con la marca y coche de unos 5 años & \textbf{Retener}: extensión de garantía o contrato de mantenimiento antes de que venza \\
-\textbf{Recién llegados} & 18,3 & 18 meses como clientes y coche de 2,5 años & \textbf{Vincular}: primera revisión en el taller oficial y bienvenida; aún no toca cambiar de coche \\
-\textbf{Coche veterano} & 18,2 & Coche de 8,4 años, casi sin leasing (4,7\,\%) y más de la mitad sin visitas en garantía & \textbf{Renovar}: valoración de su coche y financiación; traerlo al taller oficial \\
-\textbf{Electrificados} & 15,9 & Todos con eléctrico o enchufable (la media es 23\,\%), coche reciente & \textbf{Acompañar}: siguiente eléctrico, servicios de carga y \textit{wallbox} \\
-\textbf{Desconectados} & 9,0 & Ningún coche activo y 11,7\,\% con leasing terminado (la media es 3,3\,\%) & \textbf{Recuperar}: oferta de vuelta y averiguar quién se ha ido de verdad \\
-\textbf{Multivehículo} & 8,8 & 7,2 vehículos de media y 54 meses con la marca; aquí están 904 de las 908 cuentas grandes & \textbf{Ampliar}: gestor de cuenta y renovación de flota \\
-\textbf{Zonas premium} & 5,6 & Zona con 1,79 veces el poder adquisitivo típico de su país, casi todos en Suiza & \textbf{Elevar}: gama alta y servicio premium \\
+\textbf{Coche en garantía} & 24,1 & El que más ha usado la garantía (4,4 visitas por coche, frente a 2,1), 48 meses con la marca y coche de unos 5 años \\
+\textbf{Recién llegados} & 18,3 & 18 meses como clientes y coche de 2,5 años \\
+\textbf{Coche veterano} & 18,2 & Coche de 8,4 años, casi sin leasing (4,7\,\%) y más de la mitad sin visitas en garantía \\
+\textbf{Electrificados} & 15,9 & Todos con eléctrico o enchufable (la media es 23\,\%), coche reciente \\
+\textbf{Desconectados} & 9,0 & Ningún coche activo y 11,7\,\% con leasing terminado (la media es 3,3\,\%) \\
+\textbf{Multivehículo} & 8,8 & 7,2 vehículos de media y 54 meses con la marca; aquí están 904 de las 908 cuentas grandes \\
+\textbf{Zonas premium} & 5,6 & Zona con 1,79 veces el poder adquisitivo típico de su país, casi todos en Suiza \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-Para los nombres seguimos cuatro reglas: dos o tres palabras, que describan el comportamiento y no la demografía, que se entiendan sin saber qué es K-Means y que no juzguen al cliente. Por eso ``Desconectados'' y no ``Perdidos'': no tener coche activo no prueba que se hayan ido.
+Para los nombres seguimos cuatro reglas: dos o tres palabras, que describan el comportamiento y no la demografía, que se entiendan sin saber qué es K-Means y que no juzguen al cliente. Por eso ``Desconectados'' y no ``Perdidos'': no tener coche activo no prueba que se hayan ido. Qué hacemos con cada segmento lo contamos en la sección de estrategia, después de comprobar en los retos avanzados que podemos fiarnos de ellos.
 
-\subsection*{Tres cosas que aprendimos al interpretar}
+\subsection*{Dos cosas que aprendimos al interpretar}
 
 \begin{itemize}
   \item \textbf{No hay un segmento de furgonetas.} Las furgonetas se concentran algo en Recién llegados y Multivehículo (alrededor del 20\,\%, frente al 11\,\% del total), pero en ningún segmento son mayoría. Es consecuencia de dejar las \textit{one-hot} en 0/1: los segmentos los definen la relación con la marca y el ciclo de vida del coche, no el producto. Nos parece más útil, porque dice \emph{cuándo} y \emph{cómo} hablar a cada cliente; el producto se ajusta dentro de cada segmento.
   \item \textbf{Las visitas al taller son solo visitas en garantía.} Suben con la edad del coche hasta los 5--6 años y luego bajan. Por eso el segmento con más visitas tiene el coche en esa edad, y el de coche veterano apenas tiene ninguna. No miden fidelidad al taller, sino uso de la garantía. Lo tuvimos en cuenta al elegir los nombres y las acciones.
-  \item \textbf{Los canales de contacto son iguales en todos los segmentos} (email 98\,\%, teléfono 86\,\%, correo 85\,\%). El canal se elige por el mensaje, no por el segmento.
 \end{itemize}
 
-Todo esto está también en un \textbf{dashboard} (\var{outputs/dashboard\_segmentos.html}). Es un único fichero que se abre en cualquier navegador sin instalar nada y que solo lleva datos agregados. Tiene una vista general y una ficha por segmento con su plan en las cuatro palancas del reto: oferta de vehículo, mantenimiento, fidelización y comunicación.
+Todo esto está también en un \textbf{dashboard} (\var{outputs/dashboard\_segmentos.html}). Es un único fichero que se abre en cualquier navegador sin instalar nada y que solo lleva datos agregados. Tiene una vista general y una ficha por segmento con su perfil completo y su plan de acción.
 
 \section{Reto avanzado 1 · Comparativa de algoritmos}
 
@@ -338,7 +340,7 @@ Esto matiza algo que dijimos en el reto 3. Allí descartamos $k=6$ porque cambia
 \clearpage
 \section{Estrategia de marketing por segmento}
 
-Cada segmento pide un trato distinto. Lo que decide qué ofrecer y cuándo es el segmento; el canal lo decide el tipo de mensaje, porque los consentimientos son prácticamente iguales en los siete (email 98\,\%, teléfono 86\,\%, correo postal 85\,\%).
+Con los segmentos ya comprobados, decidimos cómo tratar a cada uno:
 
 \begin{table}[H]
 \centering\footnotesize
@@ -346,7 +348,7 @@ Cada segmento pide un trato distinto. Lo que decide qué ofrecer y cuándo es el
 \toprule
 Segmento & Quién es & Qué hacemos & Cómo le hablamos \\
 \midrule
-\textbf{Coche en garantía} \newline 24,1\,\% · \textbf{Retener} & 48 meses con la marca y coche de 5,2 años (la mitad pasa de 5): se le acaba la garantía. Es el que más la ha usado (4,4 visitas) & Antes de que venza, extensión de garantía o contrato de mantenimiento con precio cerrado, para que no se vaya a un taller independiente. A quien tenga el coche más viejo, renovación con valoración del suyo y prueba de un híbrido (solo el 1,7\,\% está electrificado) & Aviso personal meses antes del fin de la garantía (estimado por la matriculación), por email y teléfono \\
+\textbf{Coche en garantía} \newline 24,1\,\% · \textbf{Retener} & 48 meses con la marca y coche de 5,2 años (la mitad pasa de 5): está llegando al final de la garantía. Es el que más la ha usado (4,4 visitas) & Antes de que venza, extensión de garantía o contrato de mantenimiento con precio cerrado, para que no se vaya a un taller independiente. A quien tenga el coche más viejo, renovación con valoración del suyo y prueba de un híbrido (solo el 1,7\,\% está electrificado) & Aviso personal meses antes del fin de la garantía (estimado por la matriculación), por email y teléfono \\
 \addlinespace
 \textbf{Recién llegados} \newline 18,3\,\% · \textbf{Vincular} & 18 meses como clientes, coche de 2,5 años y el 45\,\% aún sin visitas en garantía. Uno de cada cinco lleva furgoneta & No es momento de vender coche: primera revisión en el taller oficial, activar la app y los servicios conectados, accesorios & Programa de bienvenida por email durante el primer año, activado por los meses como cliente \\
 \addlinespace
@@ -354,7 +356,7 @@ Segmento & Quién es & Qué hacemos & Cómo le hablamos \\
 \addlinespace
 \textbf{Electrificados} \newline 15,9\,\% · \textbf{Acompañar} & Todos tienen un eléctrico o enchufable, con coche de 2,9 años. El 35\,\% tiene leasing activo & Que su siguiente coche siga siendo eléctrico y Mercedes: al terminar el leasing, paso de enchufable a eléctrico puro. Servicios de carga, \textit{wallbox} y revisión de batería & Email con contenido práctico: carga, autonomía y novedades EQ \\
 \addlinespace
-\textbf{Desconectados} \newline 9,0\,\% · \textbf{Recuperar} & Ningún coche activo. El 11,7\,\% terminó un leasing y el 30\,\% nunca llegó a conectar un coche & Dos tratamientos: a quien terminó el leasing, una oferta de vuelta; a quien nunca conectó, una campaña de activación. Antes, una encuesta corta para saber quién se ha ido de verdad & Teléfono para los de leasing terminado y email para el resto; tono cercano, sin presión \\
+\textbf{Desconectados} \newline 9,0\,\% · \textbf{Recuperar} & Ningún coche activo. El 11,7\,\% terminó un leasing y el 30\,\% tiene 0 meses de antigüedad: probablemente nunca llegó a conectar un coche (reto avanzado 2) & Dos tratamientos: a quien terminó el leasing, una oferta de vuelta; a quien probablemente nunca conectó, una campaña de activación. Antes, una encuesta corta para saber quién se ha ido de verdad & Teléfono para los de leasing terminado y email para el resto; tono cercano, sin presión \\
 \addlinespace
 \textbf{Multivehículo} \newline 8,8\,\% · \textbf{Ampliar} & 7,2 vehículos de media y 54 meses con la marca. El 48\,\% tiene leasing activo, el 48\,\% ya tiene algún electrificado y uno de cada cinco lleva furgoneta. Aquí están 904 de las 908 cuentas grandes & Tratarlos como cuentas: renovación y electrificación de flota con condiciones por volumen y contrato de mantenimiento de flota. Separar a las familias con varios coches de las flotas & Teléfono con un gestor de cuenta; nada de campañas masivas \\
 \addlinespace
@@ -363,7 +365,15 @@ Segmento & Quién es & Qué hacemos & Cómo le hablamos \\
 \end{tabularx}
 \end{table}
 
-\textbf{Por dónde empezar.} Primero, Coche en garantía y Desconectados: son los dos segmentos donde esperar cuesta clientes, porque uno está a punto de perder la garantía y el otro ya no tiene coche activo. Después, la renovación de Coche veterano y Electrificados, y por último la subida de gama de Zonas premium. Recién llegados y Multivehículo no van por campañas puntuales: el primero es un programa de bienvenida continuo y el segundo lo lleva un gestor de cuentas. Cada campaña debería lanzarse con un pequeño grupo de control que no la reciba, para medir su efecto real.
+\textbf{Los criterios detrás de la tabla.} Salen de lo que hemos visto en los retos anteriores:
+
+\begin{itemize}
+  \item \textbf{El segmento decide qué ofrecer y cuándo; el canal lo decide el tipo de mensaje.} Los consentimientos son prácticamente iguales en los siete (email 98\,\%, teléfono 86\,\%, correo postal 85\,\%): email para lo informativo, teléfono para lo urgente o de más valor, y correo postal para lo premium.
+  \item \textbf{En los segmentos del ciclo de vida del coche, la campaña se activa con el dato concreto}, como la edad del coche o los meses como cliente, y no solo con la etiqueta. Son los de fronteras más difusas (retos avanzados 1 y 3), y así un cliente de frontera recibe la oferta que le corresponde por su situación real.
+  \item \textbf{El orden lo marca la urgencia}: primero, donde esperar cuesta clientes.
+\end{itemize}
+
+\textbf{Por dónde empezar.} Primero, Coche en garantía y Desconectados: son los dos segmentos donde esperar cuesta clientes, porque uno está llegando al final de la garantía y el otro ya no tiene coche activo. Desconectados es además uno de los segmentos más estables, y en Coche en garantía la campaña se activa por la edad del coche, así que en los dos sabemos bien a quién nos dirigimos. Después, la renovación de Coche veterano y Electrificados, y por último la subida de gama de Zonas premium. Recién llegados y Multivehículo no van por campañas puntuales: el primero es un programa de bienvenida continuo y el segundo lo lleva un gestor de cuentas. Cada campaña debería lanzarse con un pequeño grupo de control que no la reciba, para medir su efecto real.
 
 \section{Resultado final}
 
@@ -380,12 +390,12 @@ Partimos de 302.850 filas cliente-vehículo y terminamos con \textbf{siete segme
 \begin{enumerate}
   \item Entrenar el modelo con 50 arranques en producción y repetir el Jackknife en cada reentrenamiento.
   \item Usar la distancia a la frontera como nota de confianza de cada cliente: para el 10\,\% más cercano a una frontera, elegir ofertas que encajen en los dos segmentos vecinos.
-  \item Empezar por las campañas de los segmentos de rasgo nítido, que son los de asignación más segura.
+  \item Ordenar las campañas por urgencia (Coche en garantía y Desconectados primero) y, en los segmentos del ciclo de vida del coche, activarlas con el dato concreto y no solo con la etiqueta.
   \item Confirmar con Mercedes-Benz el significado de los valores de 0 y 36 meses de antigüedad, y separar en Desconectados a los clientes que nunca activaron la relación de los que la perdieron.
 \end{enumerate}
 
 \subsection*{Límites}
 
-El silhouette es bajo (0,13), algo normal con datos mixtos de clientes reales. Elegimos las variables mirando el silhouette de K-Means, así que las comparaciones basadas en esa métrica le favorecen; por eso nos apoyamos también en la estabilidad y en el sentido de negocio. ``Sin coche activo'' es una señal de fuga, no una prueba, y en el 12\,\% de los clientes la antigüedad es un valor por defecto. Por último, el Jackknife mide si la segmentación es reproducible, no si es útil: su utilidad comercial es lo que defendemos en el reto 4.
+El silhouette es bajo (0,13), algo normal con datos mixtos de clientes reales. Elegimos las variables mirando el silhouette de K-Means, así que las comparaciones basadas en esa métrica le favorecen; por eso nos apoyamos también en la estabilidad y en el sentido de negocio. ``Sin coche activo'' es una señal de fuga, no una prueba, y en el 12\,\% de los clientes la antigüedad es un valor por defecto. Por último, el Jackknife mide si la segmentación es reproducible, no si es útil: su utilidad comercial es lo que defendemos en el reto 4 y en la estrategia de marketing. El efecto real de cada campaña solo se sabrá midiéndolo con un grupo de control.
 
 \end{document}
