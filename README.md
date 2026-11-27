@@ -4,7 +4,7 @@ Nuestra solución al reto de **Mercedes-Benz Group Services Madrid** en el **III
 
 **Equipo Benji:** Víctor Tirado · Alfonso del Álamo · Vicente Díaz
 
-📄 [Informe completo (PDF)](informe/informe.pdf) · 📊 [Dashboard de segmentos](outputs/dashboard_segmentos.html) · 📝 [Resumen de resultados](docs/resumen.md)
+📄 [Informe completo (PDF)](informe/informe.pdf) · 📊 [Dashboard de segmentos](https://viiktor08.github.io/Malackathon2026/outputs/dashboard_segmentos.html) · 📝 [Resumen de resultados](docs/resumen.md)
 
 ## El reto
 
